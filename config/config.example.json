@@ -1,0 +1,9 @@
+{
+  "database": {
+    "host": "localhost",
+    "port": 5435,
+    "username": "postgres",
+    "password": "postgres",
+    "dbname": "trading_ace"
+  }
+}
