@@ -10,6 +10,7 @@ func SetupRouter() *gin.Engine {
 
 	apiRoutes := r.Group("/api")
 	{
+		apiRoutes.GET("/tasks/:userId", controller.GetTasksOfUser)
 		apiRoutes.GET("/rewards/:userId", controller.GetRewardHistoryOfUser)
 	}
 
