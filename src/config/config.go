@@ -5,15 +5,25 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"sync"
 )
 
 var appConfig *AppConfig
+var once sync.Once
 
 func GetAppConfig() *AppConfig {
+	once.Do(func() {
+		loadedConfig, err := LoadConfig()
+		if err != nil {
+			log.Fatalf("Error loading config: %v", err)
+		}
+
+		appConfig = loadedConfig
+	})
 	return appConfig
 }
 
-func LoadConfig() error {
+func LoadConfig() (*AppConfig, error) {
 	env := os.Getenv("APP_ENV")
 	if env == "" {
 		env = "development"
@@ -25,15 +35,15 @@ func LoadConfig() error {
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading config file: %v", err)
-		return err
+		return nil, err
 	}
 
-	if err := viper.Unmarshal(&appConfig); err != nil {
+	var loadedConfig AppConfig
+	if err := viper.Unmarshal(&loadedConfig); err != nil {
 		log.Fatalf("Error unmarshalling config data: %v", err)
-		return err
+		return nil, err
 	}
+	loadedConfig.AppEnv = env
 
-	appConfig.AppEnv = env
-
-	return nil
+	return &loadedConfig, nil
 }
