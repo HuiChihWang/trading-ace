@@ -7,6 +7,7 @@ import (
 
 type UserService interface {
 	GetUserByID(userID string) (*model.User, error)
+	CreateUser(userID string) (*model.User, error)
 	UpdateUserPoints(userID string, points float64) error
 }
 
@@ -18,6 +19,10 @@ func NewUserService() UserService {
 	return &userServiceImpl{
 		userRepository: repository.NewUserRepository(),
 	}
+}
+
+func (s *userServiceImpl) CreateUser(userID string) (*model.User, error) {
+	return s.userRepository.CreateUser(userID)
 }
 
 func (s *userServiceImpl) GetUserByID(userID string) (*model.User, error) {

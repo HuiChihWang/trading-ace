@@ -2,8 +2,10 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"trading-ace/src/database"
+	"trading-ace/src/exception"
 	"trading-ace/src/model"
 )
 
@@ -52,6 +54,9 @@ func (u *userRepositoryImpl) GetUser(id string) (*model.User, error) {
 	err := row.Scan(&user.ID, &user.Points)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, exception.UserNotFoundError
+		}
 		return nil, err
 	}
 
@@ -70,6 +75,9 @@ func (u *userRepositoryImpl) UpdateUser(user *model.User) (*model.User, error) {
 	err = stmt.QueryRow(user.Points, user.ID).Scan(&user.ID, &user.Points)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, exception.UserNotFoundError
+		}
 		return nil, err
 	}
 
