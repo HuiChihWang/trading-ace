@@ -7,10 +7,13 @@ import (
 	"trading-ace/src/config"
 	"trading-ace/src/contract"
 	"trading-ace/src/controller"
+	"trading-ace/src/database"
 	"trading-ace/src/router"
 )
 
 func main() {
+	database.MigrateDB("file://migrations", config.GetAppConfig().Database)
+
 	ethClient, err := ethclient.Dial(config.GetAppConfig().EthereumNode.SocketUrl)
 	log.Printf("Connected to Ethereum Node: %s\n", config.GetAppConfig().EthereumNode.SocketUrl)
 	if err != nil {
