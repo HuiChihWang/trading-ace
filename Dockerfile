@@ -27,5 +27,6 @@ COPY --from=build /app/main .
 
 # Command to run the executable
 COPY config ./config
+COPY abi ./abi
 
 CMD ["./main"]

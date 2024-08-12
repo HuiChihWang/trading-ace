@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	onboardingAmount      = 1000.0
+	onboardingAmount      = 300.0
 	onboardingReward      = 100.0
 	sharedPoolTotalReward = 10000.0
 )
@@ -20,6 +20,7 @@ type TaskService interface {
 	CreateTask(userId string, taskType model.TaskType, swapAmount float64) (*model.Task, error)
 	ProcessOnBoarding(userID string, swapAmount float64) error
 	ProcessSharedPool(from time.Time, to time.Time) error
+	IsUserOnboardingCompleted(userID string) bool
 }
 
 type taskServiceImpl struct {
@@ -45,7 +46,7 @@ func (s *taskServiceImpl) GetTasksByDateRange(from time.Time, to time.Time) ([]*
 }
 
 func (s *taskServiceImpl) CreateTask(userId string, taskType model.TaskType, swapAmount float64) (*model.Task, error) {
-	if taskType == model.TaskTypeOnboarding && s.isUserOnboardingCompleted(userId) {
+	if taskType == model.TaskTypeOnboarding && s.IsUserOnboardingCompleted(userId) {
 		return nil, errors.New("onboarding already completed")
 	}
 
@@ -62,7 +63,7 @@ func (s *taskServiceImpl) CreateTask(userId string, taskType model.TaskType, swa
 	return s.taskRepository.CreateTask(task)
 }
 
-func (s *taskServiceImpl) isUserOnboardingCompleted(userID string) bool {
+func (s *taskServiceImpl) IsUserOnboardingCompleted(userID string) bool {
 	onboardingTasks, err := s.taskRepository.GetTasksByUserIDAndType(userID, model.TaskTypeOnboarding)
 
 	if err != nil {

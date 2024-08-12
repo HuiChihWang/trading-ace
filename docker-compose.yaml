@@ -11,6 +11,8 @@ services:
       - "8084:8080"
     depends_on:
       - database
+    profiles:
+      - prod
 
   database:
     image: postgres

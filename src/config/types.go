@@ -8,7 +8,12 @@ type DatabaseConfig struct {
 	DBName   string `mapstructure:"dbname"`
 }
 
+type EthereumNodeConfig struct {
+	SocketUrl string `mapstructure:"socket"`
+}
+
 type AppConfig struct {
-	AppEnv   string
-	Database DatabaseConfig `mapstructure:"database"`
+	AppEnv       string
+	Database     DatabaseConfig     `mapstructure:"database"`
+	EthereumNode EthereumNodeConfig `mapstructure:"ethereum_node"`
 }

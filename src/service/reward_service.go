@@ -18,6 +18,7 @@ type rewardServiceImpl struct {
 func NewRewardService() RewardService {
 	return &rewardServiceImpl{
 		rewardRecordRepository: repository.NewRewardRecordRepository(),
+		userService:            NewUserService(),
 	}
 }
 

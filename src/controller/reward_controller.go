@@ -13,7 +13,7 @@ func GetRewardHistoryOfUser(c *gin.Context) {
 	rewardRecords, err := rewardService.GetRewardHistory(userId)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"exception": err.Error()})
 		return
 	}
 
