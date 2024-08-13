@@ -17,7 +17,7 @@ func SetUpScheduler() (gocron.Scheduler, error) {
 	campaignConfig := config.GetAppConfig().Campaign
 
 	if campaignConfig != nil {
-		CreateCampaignJobs(sch, campaignConfig.GetCampaignStartTime(), campaignConfig.Weeks, service.NewTaskService().ProcessSharedPool)
+		CreateCampaignJobs(sch, campaignConfig.GetCampaignStartTime(), campaignConfig.Weeks, service.NewUniSwapService().ProcessSharedPool)
 	}
 
 	sch.Start()

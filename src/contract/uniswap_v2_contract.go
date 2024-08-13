@@ -85,9 +85,6 @@ func (c *UniSwapV2Contract) ListenSwapEvents(callback func(event *UniSwapV2SwapE
 				event.To = common.HexToAddress(vLog.Topics[2].Hex())
 
 				eventChan <- &event
-				if err != nil {
-					log.Printf("Callback exception: %v", err)
-				}
 			}
 		}
 	}()
