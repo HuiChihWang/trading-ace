@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	onboardingAmount      = 300.0
+	onboardingAmount      = 1000.0
 	onboardingReward      = 100.0
 	sharedPoolTotalReward = 10000.0
 )
@@ -46,20 +46,7 @@ func (s *taskServiceImpl) GetTasksByDateRange(from time.Time, to time.Time) ([]*
 }
 
 func (s *taskServiceImpl) CreateTask(userId string, taskType model.TaskType, swapAmount float64) (*model.Task, error) {
-	if taskType == model.TaskTypeOnboarding && s.IsUserOnboardingCompleted(userId) {
-		return nil, errors.New("onboarding already completed")
-	}
-
 	task := model.NewTask(userId, taskType, swapAmount)
-
-	if taskType == model.TaskTypeOnboarding {
-		task.Status = model.TaskStatusDone
-		task.CompletedAt = sql.NullTime{
-			Time:  time.Now().In(time.UTC),
-			Valid: true,
-		}
-	}
-
 	return s.taskRepository.CreateTask(task)
 }
 
@@ -78,13 +65,31 @@ func (s *taskServiceImpl) ProcessOnBoarding(userID string, swapAmount float64) e
 		return errors.New("swap amount does not meet the requirement")
 	}
 
+	if s.IsUserOnboardingCompleted(userID) {
+		return errors.New("onboarding already completed")
+	}
+
 	task, err := s.CreateTask(userID, model.TaskTypeOnboarding, swapAmount)
 
 	if err != nil {
 		return err
 	}
 
-	return s.rewardService.RewardUser(userID, task.ID, onboardingReward)
+	err = s.rewardService.RewardUser(userID, task.ID, onboardingReward)
+
+	if err != nil {
+		return err
+	}
+
+	task.Status = model.TaskStatusDone
+	task.CompletedAt = sql.NullTime{
+		Time:  time.Now().In(time.UTC),
+		Valid: true,
+	}
+
+	_, err = s.taskRepository.UpdateTask(task)
+
+	return err
 }
 
 func (s *taskServiceImpl) ProcessSharedPool(from time.Time, to time.Time) error {
@@ -94,19 +99,30 @@ func (s *taskServiceImpl) ProcessSharedPool(from time.Time, to time.Time) error 
 		return err
 	}
 
-	userSwapAmounts := make(map[string]float64)
 	totalSwapAmount := 0.0
+	filteredTasks := make([]*model.Task, 0)
 	for _, task := range tasks {
-		if (task.Type != model.TaskTypeSharedPool) || (task.Status != model.TaskStatusPending) {
-			continue
+		if task.Type != model.TaskTypeSharedPool || task.Status == model.TaskStatusDone {
+			totalSwapAmount += task.SwapAmount
+			filteredTasks = append(filteredTasks, task)
 		}
-		userSwapAmounts[task.UserID] += task.SwapAmount
-		totalSwapAmount += task.SwapAmount
 	}
 
-	for userID, swapAmount := range userSwapAmounts {
-		rewardAmount := sharedPoolTotalReward * swapAmount / totalSwapAmount
-		err := s.rewardService.RewardUser(userID, 0, rewardAmount)
+	for _, task := range filteredTasks {
+		rewardAmount := sharedPoolTotalReward * task.SwapAmount / totalSwapAmount
+		err := s.rewardService.RewardUser(task.UserID, task.ID, rewardAmount)
+		if err != nil {
+			return err
+		}
+
+		task.Status = model.TaskStatusDone
+		task.CompletedAt = sql.NullTime{
+			Time:  time.Now().In(time.UTC),
+			Valid: true,
+		}
+
+		_, err = s.taskRepository.UpdateTask(task)
+
 		if err != nil {
 			return err
 		}

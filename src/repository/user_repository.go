@@ -47,7 +47,7 @@ func (u *userRepositoryImpl) CreateUser(id string) (*model.User, error) {
 }
 
 func (u *userRepositoryImpl) GetUser(id string) (*model.User, error) {
-	sqlCommand := fmt.Sprintf("SELECT * FROM %s WHERE id = $1", usersTableName)
+	sqlCommand := fmt.Sprintf("SELECT id, points FROM %s WHERE id = $1", usersTableName)
 	row := u.dbInstance.QueryRow(sqlCommand, id)
 
 	var user model.User
@@ -64,7 +64,7 @@ func (u *userRepositoryImpl) GetUser(id string) (*model.User, error) {
 }
 
 func (u *userRepositoryImpl) UpdateUser(user *model.User) (*model.User, error) {
-	sqlCommand := fmt.Sprintf("UPDATE %s SET points = $1 WHERE id = $2 RETURNING *", usersTableName)
+	sqlCommand := fmt.Sprintf("UPDATE %s SET points = $1 WHERE id = $2 RETURNING id, points", usersTableName)
 
 	stmt, err := u.dbInstance.Prepare(sqlCommand)
 	if err != nil {
