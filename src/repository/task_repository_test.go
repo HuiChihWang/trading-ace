@@ -6,20 +6,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"trading-ace/src/config"
 	"trading-ace/src/database"
 	"trading-ace/src/model"
 )
 
 func TestTaskRepositoryImpl(t *testing.T) {
 	setUpTaskRepo := func(t *testing.T) *taskRepositoryImpl {
-		dbInstance := database.CreateDBInstance(&config.DatabaseConfig{
-			Host:     "localhost",
-			Port:     "5435",
-			Username: "postgres",
-			Password: "postgres",
-			DBName:   "trading_ace_test",
-		})
+		dbInstance := database.GetDBInstance()
 
 		t.Cleanup(func() {
 			dbInstance.Exec("DELETE FROM tasks")
@@ -141,7 +134,7 @@ func TestTaskRepositoryImpl(t *testing.T) {
 		assert.Equal(t, task.SwapAmount, updatedTask.SwapAmount)
 		assert.Equal(t, model.TaskStatusDone, updatedTask.Status)
 		assert.NotEmpty(t, updatedTask.CreatedAt)
-		assert.Equal(t, task.CompletedAt, updatedTask.CompletedAt)
+		assert.True(t, time.Now().Sub(updatedTask.CompletedAt.Time) < time.Second)
 	})
 
 	t.Run("GetTasksByDateRange", func(t *testing.T) {

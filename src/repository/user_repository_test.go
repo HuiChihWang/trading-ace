@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"trading-ace/src/config"
 	"trading-ace/src/database"
 	"trading-ace/src/exception"
 	"trading-ace/src/model"
@@ -13,14 +12,7 @@ import (
 
 func TestUserRepositoryImpl(t *testing.T) {
 	setUpUserRepo := func(t *testing.T) *userRepositoryImpl {
-		dbInstance := database.CreateDBInstance(&config.DatabaseConfig{
-			Host:     "localhost",
-			Port:     "5435",
-			Username: "postgres",
-			Password: "postgres",
-			DBName:   "trading_ace_test",
-		})
-
+		dbInstance := database.GetDBInstance()
 		t.Cleanup(func() {
 			dbInstance.Exec("DELETE FROM users")
 			fmt.Println("[Tear Down] Cleaned up users table")

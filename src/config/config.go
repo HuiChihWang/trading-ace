@@ -31,7 +31,13 @@ func LoadConfig() (*AppConfig, error) {
 
 	viper.SetConfigName(fmt.Sprintf("config.%s", env))
 	viper.SetConfigType("json")
-	viper.AddConfigPath("./config")
+
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "./config"
+	}
+
+	viper.AddConfigPath(configPath)
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatalf("Error reading config file: %v", err)

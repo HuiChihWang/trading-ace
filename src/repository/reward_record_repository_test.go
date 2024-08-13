@@ -5,19 +5,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"trading-ace/src/config"
 	"trading-ace/src/database"
 )
 
 func TestRewardRecordRepositoryImpl(t *testing.T) {
 	setUpRewardRecordRepo := func(t *testing.T) *rewardRecordRepositoryImpl {
-		dbInstance := database.CreateDBInstance(&config.DatabaseConfig{
-			Host:     "localhost",
-			Port:     "5435",
-			Username: "postgres",
-			Password: "postgres",
-			DBName:   "trading_ace_test",
-		})
+		dbInstance := database.GetDBInstance()
 
 		t.Cleanup(func() {
 			dbInstance.Exec("DELETE FROM reward_records")

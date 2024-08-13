@@ -1,0 +1,10 @@
+{
+  "database": {
+    "driver": "postgres",
+    "host": "localhost",
+    "port": 5432,
+    "username": "testuser",
+    "password": "testpassword",
+    "dbname": "trading_ace_test"
+  }
+}
