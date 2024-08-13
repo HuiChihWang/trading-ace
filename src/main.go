@@ -9,6 +9,7 @@ import (
 	"trading-ace/src/controller"
 	"trading-ace/src/database"
 	"trading-ace/src/router"
+	"trading-ace/src/scheduler"
 )
 
 func main() {
@@ -31,6 +32,9 @@ func main() {
 	}
 
 	r := router.SetupRouter()
+
+	sch, _ := scheduler.SetUpScheduler()
+	defer scheduler.ShutDowScheduler(sch)
 
 	err = r.Run(":8083")
 	if err != nil {

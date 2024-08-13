@@ -9,5 +9,9 @@
   },
   "ethereum_node": {
     "socket": "wss://mainnet.infura.io/ws/v3/5517ebbc27a04d039903e612c0996e84"
+  },
+  "campaign": {
+    "start_time": "2024-09-01",
+    "weeks": 4
   }
 }

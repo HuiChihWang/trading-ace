@@ -1,6 +1,9 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type DatabaseConfig struct {
 	Driver   string `mapstructure:"driver"`
@@ -23,8 +26,20 @@ type EthereumNodeConfig struct {
 	SocketUrl string `mapstructure:"socket"`
 }
 
+type CampaignConfig struct {
+	CampaignStartTime string `mapstructure:"start_time"`
+	Weeks             int    `mapstructure:"weeks"`
+}
+
+func (c *CampaignConfig) GetCampaignStartTime() time.Time {
+	layout := "2006-01-02"
+	t, _ := time.Parse(layout, c.CampaignStartTime)
+	return t
+}
+
 type AppConfig struct {
 	AppEnv       string
 	Database     *DatabaseConfig     `mapstructure:"database"`
 	EthereumNode *EthereumNodeConfig `mapstructure:"ethereum_node"`
+	Campaign     *CampaignConfig     `mapstructure:"campaign"`
 }
