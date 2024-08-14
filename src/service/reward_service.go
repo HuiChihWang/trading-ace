@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"trading-ace/src/model"
 	"trading-ace/src/repository"
 )
@@ -23,6 +24,10 @@ func NewRewardService() RewardService {
 }
 
 func (r *rewardServiceImpl) RewardUser(userID string, TaskID int, points float64) error {
+	if points <= 0 {
+		return errors.New("points should be greater than 0")
+	}
+
 	err := r.userService.UpdateUserPoints(userID, points)
 	if err != nil {
 		return err

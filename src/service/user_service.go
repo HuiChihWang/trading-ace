@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"trading-ace/src/model"
 	"trading-ace/src/repository"
 )
@@ -30,6 +31,10 @@ func (s *userServiceImpl) GetUserByID(userID string) (*model.User, error) {
 }
 
 func (s *userServiceImpl) UpdateUserPoints(userID string, points float64) error {
+	if points <= 0 {
+		return errors.New("points should be greater than 0")
+	}
+
 	user, err := s.userRepository.GetUser(userID)
 	if err != nil {
 		return err

@@ -9,7 +9,7 @@ on:
       - main
 env:
   APP_ENV: github
-  CONFIG_PATH: ${{ github.workspace }}/config
+  CONFIG_FOLDER: ${{ github.workspace }}/config
 
 jobs:
   test:
@@ -32,10 +32,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
@@ -46,5 +46,14 @@ jobs:
         run: |
           go run migrations/main.go
 
-      - name: Run tests
-        run: go test -v ./...
+      - name: Run tests and generate coverage report
+        run: go test -coverprofile=coverage.out -v ./src/...
+
+      - name: Check coverage
+        run: |
+          coverage=$(go tool cover -func=coverage.out | grep total: | awk '{print $3}' | sed 's/%//')
+          echo "Coverage: $coverage%"
+          if [ "$(echo "$coverage < 60" | bc)" -eq 1 ]; then
+            echo "Coverage is below 60%. Failing the build."
+            exit 1
+          fi

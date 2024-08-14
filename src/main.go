@@ -25,7 +25,7 @@ func main() {
 	contractAddress := "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc"
 	uniSwapContract, err := contract.NewUniSwapV2Contract(contractAddress, "abi/uniswapv2.abi.json", ethClient)
 
-	uniSwapContract.ListenSwapEvents(controller.HandleUniSwapV2Event)
+	uniSwapContract.ListenSwapEvents(controller.GetUniSwapEventControllerInstance().HandleUniSwapV2Event)
 
 	if config.GetAppConfig().AppEnv == "production" {
 		gin.SetMode(gin.ReleaseMode)

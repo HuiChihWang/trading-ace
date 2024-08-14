@@ -32,7 +32,7 @@ func LoadConfig() (*AppConfig, error) {
 	viper.SetConfigName(fmt.Sprintf("config.%s", env))
 	viper.SetConfigType("json")
 
-	configPath := os.Getenv("CONFIG_PATH")
+	configPath := os.Getenv("CONFIG_FOLDER")
 	if configPath == "" {
 		configPath = "./config"
 	}

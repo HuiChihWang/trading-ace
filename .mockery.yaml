@@ -1,0 +1,20 @@
+disable-version-string: True
+with-expecter: true
+mockname: "Mock{{.InterfaceName}}"
+filename: "mock_{{.InterfaceNameSnake}}.go"
+dir: "mock/{{.PackageName}}"
+outpkg: "{{.PackageName}}"
+packages:
+  trading-ace/src/repository:
+    config:
+    interfaces:
+      UserRepository:
+      RewardRecordRepository:
+      TaskRepository:
+  trading-ace/src/service:
+    config:
+    interfaces:
+      UniSwapService:
+      UserService:
+      TaskService:
+      RewardService:

@@ -2,11 +2,34 @@ package controller
 
 import (
 	"fmt"
+	"sync"
 	"trading-ace/src/contract"
 	"trading-ace/src/service"
 )
 
-func HandleUniSwapV2Event(event *contract.UniSwapV2SwapEvent) error {
+type UniSwapEventController interface {
+	HandleUniSwapV2Event(event *contract.UniSwapV2SwapEvent) error
+}
+
+type uniSwapEventController struct {
+	uniSwapService service.UniSwapService
+}
+
+var (
+	uniSwapEventControllerInstance *uniSwapEventController
+	uniSwapEventControllerOnce     sync.Once
+)
+
+func GetUniSwapEventControllerInstance() UniSwapEventController {
+	uniSwapEventControllerOnce.Do(func() {
+		uniSwapEventControllerInstance = &uniSwapEventController{
+			uniSwapService: service.NewUniSwapService(),
+		}
+	})
+	return uniSwapEventControllerInstance
+}
+
+func (u *uniSwapEventController) HandleUniSwapV2Event(event *contract.UniSwapV2SwapEvent) error {
 	if event == nil {
 		return nil
 	}
@@ -28,5 +51,5 @@ func HandleUniSwapV2Event(event *contract.UniSwapV2SwapEvent) error {
 	fmt.Printf("Sender: %s\n", senderID)
 	fmt.Printf("Swap Amount: %f USD\n", swapAmountFloat)
 
-	return service.NewUniSwapService().ProcessUniSwapTransaction(senderID, swapAmountFloat)
+	return u.uniSwapService.ProcessUniSwapTransaction(senderID, swapAmountFloat)
 }

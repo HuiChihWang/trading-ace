@@ -34,6 +34,18 @@ func TestUserRepositoryImpl(t *testing.T) {
 		assert.Equal(t, 0.0, user.Points)
 	})
 
+	t.Run("CreateUserDuplicate", func(t *testing.T) {
+		repo := setUpUserRepo(t)
+		_, err := repo.CreateUser("test_user_id")
+		if err != nil {
+			t.Errorf("CreateUser() exception = %v", err)
+		}
+
+		createdUser, err := repo.CreateUser("test_user_id")
+		assert.Nil(t, createdUser)
+		assert.NotNil(t, err)
+	})
+
 	t.Run("GetUser", func(t *testing.T) {
 		repo := setUpUserRepo(t)
 		_, err := repo.CreateUser("test_user_id")
