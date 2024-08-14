@@ -2,10 +2,12 @@ package service
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"trading-ace/mock/repository"
 	"trading-ace/mock/service"
 	"trading-ace/src/model"
+	repoReal "trading-ace/src/repository"
 )
 
 var rewardService RewardService
@@ -25,13 +27,33 @@ func TestRewardServiceImpl_RewardUser(t *testing.T) {
 	t.Run("RewardUser", func(t *testing.T) {
 		setUpRewardService(t)
 
+		mockedUserService.EXPECT().GetUserByID("test_user_id").Return(&model.User{
+			ID:     "test_user_id",
+			Points: 0.0,
+		}, nil).Times(1)
+
 		mockedUserService.EXPECT().UpdateUserPoints("test_user_id", 10.0).Return(nil).Times(1)
-		mockedRewardRecordRepository.EXPECT().CreateRewardRecord("test_user_id", 10.0, 1).Return(
+		mockedRewardRecordRepository.EXPECT().CreateRewardRecord(mock.MatchedBy(
+			func(rewardRecord *model.RewardRecord) bool {
+				return rewardRecord.UserID == "test_user_id" &&
+					rewardRecord.Points == 10.0 &&
+					rewardRecord.TaskID == 1 &&
+					rewardRecord.OriginPoints == 0.0 &&
+					rewardRecord.UpdatedPoints == 10.0
+			},
+		)).Return(
 			&model.RewardRecord{
-				UserID: "test_user_id",
-				Points: 10.0,
-				TaskID: 1,
+				UserID:        "test_user_id",
+				Points:        10.0,
+				TaskID:        1,
+				OriginPoints:  0.0,
+				UpdatedPoints: 10.0,
 			}, nil).Times(1)
+
+		mockedUserService.EXPECT().GetUserByID("test_user_id").Return(&model.User{
+			ID:     "test_user_id",
+			Points: 10.0,
+		}, nil).Times(1)
 
 		err := rewardService.RewardUser("test_user_id", 1, 10.0)
 		if err != nil {
@@ -60,6 +82,10 @@ func TestRewardServiceImpl_RewardUser(t *testing.T) {
 	t.Run("RewardUserFail", func(t *testing.T) {
 		setUpRewardService(t)
 
+		mockedUserService.EXPECT().GetUserByID("test_user_id").Return(&model.User{
+			ID:     "test_user_id",
+			Points: 0.0,
+		}, nil).Times(1)
 		mockedUserService.EXPECT().UpdateUserPoints("test_user_id", 10.0).Return(assert.AnError).Times(1)
 
 		err := rewardService.RewardUser("test_user_id", 1, 10.0)
@@ -71,8 +97,18 @@ func TestRewardServiceImpl_RewardUser(t *testing.T) {
 	t.Run("CreateRewardRecordFail", func(t *testing.T) {
 		setUpRewardService(t)
 
+		mockedUserService.EXPECT().GetUserByID("test_user_id").Return(&model.User{
+			ID:     "test_user_id",
+			Points: 0.0,
+		}, nil).Times(1)
+
 		mockedUserService.EXPECT().UpdateUserPoints("test_user_id", 10.0).Return(nil).Times(1)
-		mockedRewardRecordRepository.EXPECT().CreateRewardRecord("test_user_id", 10.0, 1).Return(nil, assert.AnError).Times(1)
+		mockedUserService.EXPECT().GetUserByID("test_user_id").Return(&model.User{
+			ID:     "test_user_id",
+			Points: 10.0,
+		}, nil).Times(1)
+
+		mockedRewardRecordRepository.EXPECT().CreateRewardRecord(mock.Anything).Return(nil, assert.AnError).Times(1)
 
 		err := rewardService.RewardUser("test_user_id", 1, 10.0)
 		if err == nil {
@@ -85,11 +121,17 @@ func TestRewardServiceImpl_GetRewardHistory(t *testing.T) {
 	t.Run("GetRewardHistory", func(t *testing.T) {
 		setUpRewardService(t)
 
-		mockedRewardRecordRepository.EXPECT().GetRewardRecordsByUserID("test_user_id").Return([]*model.RewardRecord{
-			{
+		mockedRewardRecordRepository.EXPECT().SearchRewardRecords(
+			&repoReal.RewardRecordSearchCondition{
 				UserID: "test_user_id",
-				Points: 10.0,
-				TaskID: 1,
+			},
+		).Return([]*model.RewardRecord{
+			{
+				UserID:        "test_user_id",
+				Points:        10.0,
+				TaskID:        1,
+				OriginPoints:  0.0,
+				UpdatedPoints: 10.0,
 			},
 		}, nil).Times(1)
 
@@ -107,7 +149,11 @@ func TestRewardServiceImpl_GetRewardHistory(t *testing.T) {
 	t.Run("GetRewardHistoryFail", func(t *testing.T) {
 		setUpRewardService(t)
 
-		mockedRewardRecordRepository.EXPECT().GetRewardRecordsByUserID("test_user_id").Return(nil, assert.AnError).Times(1)
+		mockedRewardRecordRepository.EXPECT().SearchRewardRecords(
+			&repoReal.RewardRecordSearchCondition{
+				UserID: "test_user_id",
+			},
+		).Return(nil, assert.AnError).Times(1)
 
 		rewardRecords, err := rewardService.GetRewardHistory("test_user_id")
 		if err == nil {
