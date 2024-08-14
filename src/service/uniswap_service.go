@@ -57,14 +57,15 @@ func (s *uniSwapServiceImpl) ProcessUniSwapTransaction(senderID string, swapAmou
 		}
 
 		log.Println(fmt.Sprintf("User %s has completed onboarding", senderID))
-	} else {
-		_, err := s.taskService.CreateTask(senderID, model.TaskTypeSharedPool, swapAmount)
-
-		if err != nil {
-			return err
-		}
-		log.Println(fmt.Sprintf("User %s add %f USD to shared pool", senderID, swapAmount))
 	}
+
+	_, err = s.taskService.CreateTask(senderID, model.TaskTypeSharedPool, swapAmount)
+
+	if err != nil {
+		return err
+	}
+
+	log.Println(fmt.Sprintf("User %s add %f USD to shared pool", senderID, swapAmount))
 
 	return nil
 }
@@ -79,6 +80,10 @@ func (s *uniSwapServiceImpl) ProcessSharedPool(from time.Time, to time.Time) err
 	totalSwapAmount := 0.0
 	var filteredTasks []*model.Task
 	for _, task := range tasks {
+		if !s.isUserAlreadyOnboard(task.UserID) {
+			continue
+		}
+
 		if task.Type != model.TaskTypeSharedPool || task.Status == model.TaskStatusDone {
 			continue
 		}

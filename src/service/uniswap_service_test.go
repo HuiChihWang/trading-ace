@@ -109,6 +109,7 @@ func TestUniSwapServiceImpl_ProcessUniSwapTransaction(t *testing.T) {
 
 		uniSwapTestSuite.mockedRewardService.EXPECT().RewardUser("test_user_address", 10, 100.0).Return(nil).Times(1)
 		uniSwapTestSuite.mockedTaskService.EXPECT().CompleteTask(10).Return(nil).Times(1)
+		uniSwapTestSuite.mockedTaskService.EXPECT().CreateTask("test_user_address", model.TaskTypeSharedPool, 10000.0).Return(&model.Task{}, nil).Times(1)
 
 		err := uniSwapTestSuite.uniSwapService.ProcessUniSwapTransaction("test_user_address", 10000.0)
 		assert.Nil(t, err)
@@ -177,7 +178,7 @@ func TestUniSwapServiceImpl_ProcessSharedPool(t *testing.T) {
 			ID:         1,
 			UserID:     "test_user_1",
 			Type:       model.TaskTypeSharedPool,
-			Status:     model.TaskStatusDone,
+			Status:     model.TaskStatusPending,
 			SwapAmount: 10.0,
 			CreatedAt:  createdTime,
 		},
@@ -213,6 +214,22 @@ func TestUniSwapServiceImpl_ProcessSharedPool(t *testing.T) {
 			SwapAmount: 10.0,
 			CreatedAt:  createdTime,
 		},
+		{
+			ID:         5,
+			UserID:     "test_user_3",
+			Type:       model.TaskTypeSharedPool,
+			Status:     model.TaskStatusPending,
+			SwapAmount: 10.0,
+			CreatedAt:  createdTime,
+		},
+		{
+			ID:         6,
+			UserID:     "test_user_2",
+			Type:       model.TaskTypeSharedPool,
+			Status:     model.TaskStatusDone,
+			SwapAmount: 10.0,
+			CreatedAt:  createdTime,
+		},
 	}
 
 	t.Run("Success", func(t *testing.T) {
@@ -223,12 +240,34 @@ func TestUniSwapServiceImpl_ProcessSharedPool(t *testing.T) {
 
 		uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByDateRange(fromTime, toTime).Return(tasksPool, nil).Times(1)
 
-		expectedRewards := []float64{0.0, 2500.0, 5000.0, 2500.0, 0.0}
-		for index, task := range tasksPool {
-			if task.Status == model.TaskStatusDone || task.Type != model.TaskTypeSharedPool {
-				continue
+		IsUsersOnBoarded := map[string]bool{
+			"test_user_1": true,
+			"test_user_2": true,
+			"test_user_3": false,
+		}
+		for userID, isOnboarded := range IsUsersOnBoarded {
+			if isOnboarded {
+				uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType(userID, model.TaskTypeOnboarding).Return([]*model.Task{
+					{
+						UserID: userID,
+						Type:   model.TaskTypeOnboarding,
+						Status: model.TaskStatusDone,
+					},
+				}, nil)
+			} else {
+				uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType(userID, model.TaskTypeOnboarding).Return([]*model.Task{}, nil)
 			}
-			uniSwapTestSuite.mockedRewardService.EXPECT().RewardUser(task.UserID, task.ID, expectedRewards[index]).Return(nil).Times(1)
+		}
+
+		filteredTasksAndExpectedPoints := map[*model.Task]float64{
+			tasksPool[0]: 2000,
+			tasksPool[1]: 2000,
+			tasksPool[2]: 4000,
+			tasksPool[3]: 2000,
+		}
+
+		for task, expectedPoints := range filteredTasksAndExpectedPoints {
+			uniSwapTestSuite.mockedRewardService.EXPECT().RewardUser(task.UserID, task.ID, expectedPoints).Return(nil).Times(1)
 			uniSwapTestSuite.mockedTaskService.EXPECT().CompleteTask(task.ID).Return(nil).Times(1)
 		}
 
