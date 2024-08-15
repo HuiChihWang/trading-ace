@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Masterminds/squirrel"
 	"time"
 	"trading-ace/src/database"
@@ -37,11 +36,8 @@ func (r *rewardRecordRepositoryImpl) CreateRewardRecord(rewardRecord *model.Rewa
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	sqlCommand, args, err := psql.Insert(rewardRecordTableName).
 		Columns("user_id", "points", "task_id", "created_at", "original_points", "updated_points").
-		Values(rewardRecord.UserID, rewardRecord.Points, rewardRecord.TaskID, rewardRecord.CreatedAt, rewardRecord.OriginPoints, rewardRecord.UpdatedPoints).
+		Values(rewardRecord.UserID, rewardRecord.Points, rewardRecord.TaskID, rewardRecord.CreatedAt.UTC(), rewardRecord.OriginPoints, rewardRecord.UpdatedPoints).
 		Suffix("RETURNING id").ToSql()
-
-	fmt.Printf("SQL Command: %s\n", sqlCommand)
-	fmt.Printf("Arguments: %v\n", args)
 
 	err = r.dbInstance.QueryRow(sqlCommand, args...).Scan(&rewardRecord.ID)
 
@@ -53,6 +49,7 @@ func (r *rewardRecordRepositoryImpl) CreateRewardRecord(rewardRecord *model.Rewa
 }
 
 func (r *rewardRecordRepositoryImpl) SearchRewardRecords(condition *RewardRecordSearchCondition) ([]*model.RewardRecord, error) {
+	condition.StartTime = condition.StartTime.In(time.UTC)
 	psql := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 	query := psql.
 		Select("id, user_id, points, task_id, created_at, original_points, updated_points").

@@ -2,13 +2,16 @@ package controller
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 	"trading-ace/mock/service"
 	"trading-ace/src/model"
+	"trading-ace/src/response"
 )
 
 type rewardControllerTestSuite struct {
@@ -55,46 +58,63 @@ func TestGetRewardHistoryOfUser(t *testing.T) {
 	t.Run("GetRewardHistoryOfUser", func(t *testing.T) {
 		testSuite.setUp(t)
 
-		testSuite.mockedRewardService.EXPECT().
-			GetRewardHistory("test_user_id").
-			Return(recordHistory, nil)
+		testUser := "test_user_id"
+		startTimeStr := "2024-08-15T00:00:00Z"
+		endTimeStr := "2024-08-16T23:59:59Z"
+		testUrl := fmt.Sprintf("/api/reward-history?user_address=%s&start_time=%s&end_time=%s", testUser, startTimeStr, endTimeStr)
 
 		testResponseWriter := httptest.NewRecorder()
 		testContext, _ := gin.CreateTestContext(testResponseWriter)
-		testContext.Params = gin.Params{
-			{Key: "userId", Value: "test_user_id"},
-		}
+		testContext.Request = httptest.NewRequest(http.MethodGet, testUrl, nil)
+
+		startTime, _ := time.Parse(time.RFC3339, startTimeStr)
+		endTime, _ := time.Parse(time.RFC3339, endTimeStr)
+
+		testSuite.mockedRewardService.EXPECT().
+			GetRewardHistory(testUser, startTime, endTime.Sub(startTime)).
+			Return(recordHistory, nil)
 
 		testSuite.rewardController.GetRewardHistoryOfUser(testContext)
 
 		assert.Equal(t, http.StatusOK, testContext.Writer.Status())
 
-		var recordHistoryFromRes []*model.RewardRecord
-		err := json.Unmarshal(testResponseWriter.Body.Bytes(), &recordHistoryFromRes)
+		expectedRes := response.CreatePointHistoryCollection(&recordHistory)
+
+		expectedResStr, err := json.Marshal(expectedRes)
 
 		assert.Nil(t, err)
-		assert.Equal(t, recordHistory, recordHistoryFromRes)
+		assert.Equal(t, string(expectedResStr), testResponseWriter.Body.String())
 	})
 
 	t.Run("GetRewardHistoryOfUser with error", func(t *testing.T) {
 		testSuite.setUp(t)
 
-		testSuite.mockedRewardService.EXPECT().
-			GetRewardHistory("test_user_id").
-			Return(nil, assert.AnError)
+		testUser := "test_user_id"
+		startTimeStr := "2024-08-15T00:00:00Z"
+		endTimeStr := "2024-08-16T23:59:59Z"
+		testUrl := fmt.Sprintf("/api/reward-history?user_address=%s&start_time=%s&end_time=%s", testUser, startTimeStr, endTimeStr)
 
 		testResponseWriter := httptest.NewRecorder()
 		testContext, _ := gin.CreateTestContext(testResponseWriter)
-		testContext.Params = gin.Params{
-			{Key: "userId", Value: "test_user_id"},
+		testContext.Request = httptest.NewRequest(http.MethodGet, testUrl, nil)
+
+		startTime, err := time.Parse(time.RFC3339, startTimeStr)
+		endTime, err := time.Parse(time.RFC3339, endTimeStr)
+
+		if err != nil {
+			t.Errorf("Error parsing time: %v", err)
 		}
+
+		testSuite.mockedRewardService.EXPECT().
+			GetRewardHistory("test_user_id", startTime, endTime.Sub(startTime)).
+			Return(nil, assert.AnError)
 
 		testSuite.rewardController.GetRewardHistoryOfUser(testContext)
 
 		assert.Equal(t, http.StatusInternalServerError, testContext.Writer.Status())
 
 		var exception map[string]string
-		err := json.Unmarshal(testResponseWriter.Body.Bytes(), &exception)
+		err = json.Unmarshal(testResponseWriter.Body.Bytes(), &exception)
 
 		assert.Nil(t, err)
 		assert.Equal(t, assert.AnError.Error(), exception["exception"])

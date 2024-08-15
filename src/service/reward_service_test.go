@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"testing"
+	"time"
 	"trading-ace/mock/repository"
 	"trading-ace/mock/service"
 	"trading-ace/src/model"
@@ -121,9 +122,12 @@ func TestRewardServiceImpl_GetRewardHistory(t *testing.T) {
 	t.Run("GetRewardHistory", func(t *testing.T) {
 		setUpRewardService(t)
 
+		currentTime := time.Now()
 		mockedRewardRecordRepository.EXPECT().SearchRewardRecords(
 			&repoReal.RewardRecordSearchCondition{
-				UserID: "test_user_id",
+				UserID:    "test_user_id",
+				StartTime: currentTime,
+				Duration:  time.Hour * 24,
 			},
 		).Return([]*model.RewardRecord{
 			{
@@ -132,10 +136,11 @@ func TestRewardServiceImpl_GetRewardHistory(t *testing.T) {
 				TaskID:        1,
 				OriginPoints:  0.0,
 				UpdatedPoints: 10.0,
+				CreatedAt:     currentTime.Add(3 * time.Hour),
 			},
 		}, nil).Times(1)
 
-		rewardRecords, err := rewardService.GetRewardHistory("test_user_id")
+		rewardRecords, err := rewardService.GetRewardHistory("test_user_id", currentTime, time.Hour*24)
 		if err != nil {
 			t.Errorf("GetRewardHistory() exception = %v", err)
 		}
@@ -146,16 +151,40 @@ func TestRewardServiceImpl_GetRewardHistory(t *testing.T) {
 		assert.Equal(t, 1, rewardRecords[0].TaskID)
 	})
 
+	t.Run("GetRewardHistoryWithInvalidDuration", func(t *testing.T) {
+		setUpRewardService(t)
+
+		t.Run("DurationLessOrEqualThanZero", func(t *testing.T) {
+			records, err := rewardService.GetRewardHistory("test_user_id", time.Now(), -1)
+			assert.NotNil(t, err)
+			assert.Nil(t, records)
+
+			records, err = rewardService.GetRewardHistory("test_user_id", time.Now(), 0)
+			assert.NotNil(t, err)
+			assert.Nil(t, records)
+		})
+
+		t.Run("DurationGreaterThanMaxQueryRewardHistoryDuration (30 days)", func(t *testing.T) {
+			records, err := rewardService.GetRewardHistory("test_user_id", time.Now(), time.Hour*24*31)
+			assert.NotNil(t, err)
+			assert.Nil(t, records)
+		})
+
+	})
+
 	t.Run("GetRewardHistoryFail", func(t *testing.T) {
 		setUpRewardService(t)
 
+		currentTime := time.Now()
 		mockedRewardRecordRepository.EXPECT().SearchRewardRecords(
 			&repoReal.RewardRecordSearchCondition{
-				UserID: "test_user_id",
+				UserID:    "test_user_id",
+				StartTime: currentTime,
+				Duration:  time.Hour * 24,
 			},
 		).Return(nil, assert.AnError).Times(1)
 
-		rewardRecords, err := rewardService.GetRewardHistory("test_user_id")
+		rewardRecords, err := rewardService.GetRewardHistory("test_user_id", currentTime, time.Hour*24)
 		if err == nil {
 			t.Errorf("GetRewardHistory() expected error but got nil")
 		}

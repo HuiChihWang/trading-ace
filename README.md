@@ -12,7 +12,6 @@ uniswapV2 events and do some customization reward logics. It is built using *gol
 - [Features](#features)
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [Contributing](#contributing)
 - [Testing](#testing)
 - [License](#license)
 - [Contact](#contact)
@@ -30,7 +29,12 @@ uniswapV2 events and do some customization reward logics. It is built using *gol
     - Calculated on a weekly basis
 - **Query API Support**
   - Get user reward points history
-    - path: `GET /api/rewards/:userId`
+    - path: `GET /api/rewards?user_address=&start_time=&end_time=`
+    - query params:
+        - user_address: user address `string`
+        - start_time: start time of the query period `string` `RFC3339`
+        - end_time: end time of the query period `string` `RFC3339`
+    - example: `GET /api/rewards?user_address=0x1234567890&start_time=2021-09-01T00:00:00Z&end_time=2021-09-30T23:59:59Z`
   - Get tasks of user
     - path: `GET /api/tasks/:userId`
 

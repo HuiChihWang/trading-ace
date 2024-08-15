@@ -7,9 +7,13 @@ import (
 	"trading-ace/src/repository"
 )
 
+const (
+	maxQueryRewardHistoryDuration = 30 * 24 * time.Hour
+)
+
 type RewardService interface {
 	RewardUser(userID string, TaskID int, points float64) error
-	GetRewardHistory(userID string) ([]*model.RewardRecord, error)
+	GetRewardHistory(userID string, startTime time.Time, duration time.Duration) ([]*model.RewardRecord, error)
 }
 
 type rewardServiceImpl struct {
@@ -62,8 +66,22 @@ func (r *rewardServiceImpl) RewardUser(userID string, TaskID int, points float64
 	return err
 }
 
-func (r *rewardServiceImpl) GetRewardHistory(userID string) ([]*model.RewardRecord, error) {
+func (r *rewardServiceImpl) GetRewardHistory(userID string, startTime time.Time, duration time.Duration) ([]*model.RewardRecord, error) {
+	if duration <= 0 {
+		return nil, errors.New("duration should be greater than 0")
+	}
+
+	if duration > maxQueryRewardHistoryDuration {
+		return nil, errors.New("duration should be less than 30 days")
+	}
+
+	if startTime.After(time.Now().UTC()) {
+		return []*model.RewardRecord{}, nil
+	}
+
 	return r.rewardRecordRepository.SearchRewardRecords(&repository.RewardRecordSearchCondition{
-		UserID: userID,
+		UserID:    userID,
+		StartTime: startTime,
+		Duration:  duration,
 	})
 }

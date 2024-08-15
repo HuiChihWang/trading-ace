@@ -149,4 +149,14 @@ func TestNewRewardRecordRepositoryImpl_SearchRewardRecords(t *testing.T) {
 
 		assert.Equal(t, []int{recordsWithID[2].ID, recordsWithID[1].ID}, fundRecordIDs)
 	})
+
+	t.Run("SearchRecordShouldReturnNilSliceWhenNoQueriedData", func(t *testing.T) {
+		repo := setUpRewardRecordRepo(t)
+		records, err := repo.SearchRewardRecords(&RewardRecordSearchCondition{UserID: "test_user_id"})
+		if err != nil {
+			t.Errorf("SearchRewardRecords() error = %v", err)
+		}
+
+		assert.Empty(t, records)
+	})
 }

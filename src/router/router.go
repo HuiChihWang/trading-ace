@@ -11,7 +11,7 @@ func SetupRouter() *gin.Engine {
 	apiRoutes := r.Group("/api")
 	{
 		apiRoutes.GET("/tasks/:userId", controller.GetTaskControllerInstance().GetTasksOfUser)
-		apiRoutes.GET("/rewards/:userId", controller.GetRewardControllerInstance().GetRewardHistoryOfUser)
+		apiRoutes.GET("/reward-history", controller.GetRewardControllerInstance().GetRewardHistoryOfUser)
 	}
 
 	return r
