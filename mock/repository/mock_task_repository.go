@@ -7,6 +7,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	repository "trading-ace/src/repository"
+
 	time "time"
 )
 
@@ -311,6 +313,64 @@ func (_c *MockTaskRepository_GetTasksByUserIDAndType_Call) Return(_a0 []*model.T
 }
 
 func (_c *MockTaskRepository_GetTasksByUserIDAndType_Call) RunAndReturn(run func(string, model.TaskType) ([]*model.Task, error)) *MockTaskRepository_GetTasksByUserIDAndType_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SearchTasks provides a mock function with given fields: condition
+func (_m *MockTaskRepository) SearchTasks(condition *repository.SearchTasksCondition) ([]*model.Task, error) {
+	ret := _m.Called(condition)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchTasks")
+	}
+
+	var r0 []*model.Task
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*repository.SearchTasksCondition) ([]*model.Task, error)); ok {
+		return rf(condition)
+	}
+	if rf, ok := ret.Get(0).(func(*repository.SearchTasksCondition) []*model.Task); ok {
+		r0 = rf(condition)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*model.Task)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*repository.SearchTasksCondition) error); ok {
+		r1 = rf(condition)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockTaskRepository_SearchTasks_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchTasks'
+type MockTaskRepository_SearchTasks_Call struct {
+	*mock.Call
+}
+
+// SearchTasks is a helper method to define mock.On call
+//   - condition *repository.SearchTasksCondition
+func (_e *MockTaskRepository_Expecter) SearchTasks(condition interface{}) *MockTaskRepository_SearchTasks_Call {
+	return &MockTaskRepository_SearchTasks_Call{Call: _e.mock.On("SearchTasks", condition)}
+}
+
+func (_c *MockTaskRepository_SearchTasks_Call) Run(run func(condition *repository.SearchTasksCondition)) *MockTaskRepository_SearchTasks_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*repository.SearchTasksCondition))
+	})
+	return _c
+}
+
+func (_c *MockTaskRepository_SearchTasks_Call) Return(_a0 []*model.Task, _a1 error) *MockTaskRepository_SearchTasks_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockTaskRepository_SearchTasks_Call) RunAndReturn(run func(*repository.SearchTasksCondition) ([]*model.Task, error)) *MockTaskRepository_SearchTasks_Call {
 	_c.Call.Return(run)
 	return _c
 }

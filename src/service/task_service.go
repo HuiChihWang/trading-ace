@@ -26,15 +26,23 @@ func NewTaskService() TaskService {
 }
 
 func (s *taskServiceImpl) GetTasksOfUser(userId string) ([]*model.Task, error) {
-	return s.taskRepository.GetTasksByUserID(userId)
+	return s.taskRepository.SearchTasks(&repository.SearchTasksCondition{
+		UserID: userId,
+	})
 }
 
 func (s *taskServiceImpl) GetTasksByDateRange(from time.Time, to time.Time) ([]*model.Task, error) {
-	return s.taskRepository.GetTasksByDateRange(from, to)
+	return s.taskRepository.SearchTasks(&repository.SearchTasksCondition{
+		StartTime: from,
+		EndTime:   to,
+	})
 }
 
 func (s *taskServiceImpl) GetTasksByUserIDAndType(userID string, taskType model.TaskType) ([]*model.Task, error) {
-	return s.taskRepository.GetTasksByUserIDAndType(userID, taskType)
+	return s.taskRepository.SearchTasks(&repository.SearchTasksCondition{
+		UserID: userID,
+		Type:   taskType,
+	})
 }
 
 func (s *taskServiceImpl) CreateTask(userId string, taskType model.TaskType, swapAmount float64) (*model.Task, error) {

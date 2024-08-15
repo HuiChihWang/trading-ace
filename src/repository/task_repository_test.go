@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -16,7 +15,6 @@ func TestTaskRepositoryImpl(t *testing.T) {
 
 		t.Cleanup(func() {
 			dbInstance.Exec("DELETE FROM tasks")
-			fmt.Println("[Tear Down] Cleaned up tasks table")
 		})
 
 		return &taskRepositoryImpl{
@@ -40,76 +38,6 @@ func TestTaskRepositoryImpl(t *testing.T) {
 		assert.Equal(t, task.CreatedAt, createdTask.CreatedAt)
 		assert.Equal(t, 50.0, createdTask.SwapAmount)
 		assert.Equal(t, createdTask.CompletedAt, sql.NullTime{})
-	})
-
-	t.Run("GetTaskByID", func(t *testing.T) {
-		taskRepo := setUpTaskRepo(t)
-		task := model.NewTask("test_user_id", model.TaskTypeOnboarding, 50)
-		task, _ = taskRepo.CreateTask(task)
-
-		fetchedTask, err := taskRepo.GetTaskByID(task.ID)
-
-		if err != nil {
-			t.Errorf("GetTaskByID() error = %v", err)
-		}
-
-		assert.Equal(t, task.ID, fetchedTask.ID)
-		assert.Equal(t, task.UserID, fetchedTask.UserID)
-		assert.Equal(t, task.Type, fetchedTask.Type)
-		assert.Equal(t, task.SwapAmount, fetchedTask.SwapAmount)
-		assert.Equal(t, task.Status, fetchedTask.Status)
-		assert.NotEmpty(t, fetchedTask.CreatedAt)
-		assert.Equal(t, fetchedTask.CompletedAt, sql.NullTime{})
-	})
-
-	t.Run("GetTasksByUserID", func(t *testing.T) {
-		taskRepo := setUpTaskRepo(t)
-		for i := 0; i < 10; i++ {
-			task := model.NewTask("test_user_id", model.TaskTypeOnboarding, 50)
-			_, _ = taskRepo.CreateTask(task)
-		}
-
-		tasks, err := taskRepo.GetTasksByUserID("test_user_id")
-
-		if err != nil {
-			t.Errorf("GetTasksByUserID() error = %v", err)
-		}
-
-		assert.Equal(t, 10, len(tasks))
-		for _, task := range tasks {
-			assert.NotEmpty(t, task.ID)
-			assert.Equal(t, "test_user_id", task.UserID)
-			assert.Equal(t, model.TaskTypeOnboarding, task.Type)
-			assert.Equal(t, model.TaskStatusPending, task.Status)
-			assert.Equal(t, 50.0, task.SwapAmount)
-			assert.NotEmpty(t, task.CreatedAt)
-			assert.Equal(t, task.CompletedAt, sql.NullTime{})
-		}
-	})
-
-	t.Run("GetTasksByUserIDAndType", func(t *testing.T) {
-		taskRepo := setUpTaskRepo(t)
-		for i := 0; i < 10; i++ {
-			task := model.NewTask("test_user_id", model.TaskTypeOnboarding, 50)
-			_, _ = taskRepo.CreateTask(task)
-		}
-
-		tasks, err := taskRepo.GetTasksByUserIDAndType("test_user_id", model.TaskTypeOnboarding)
-
-		if err != nil {
-			t.Errorf("GetTasksByUserIDAndType() error = %v", err)
-		}
-
-		assert.Equal(t, 10, len(tasks))
-		for _, task := range tasks {
-			assert.Equal(t, "test_user_id", task.UserID)
-			assert.Equal(t, model.TaskTypeOnboarding, task.Type)
-			assert.Equal(t, model.TaskStatusPending, task.Status)
-			assert.Equal(t, 50.0, task.SwapAmount)
-			assert.NotEmpty(t, task.CreatedAt)
-			assert.NotEmpty(t, task.ID)
-			assert.Equal(t, task.CompletedAt, sql.NullTime{})
-		}
 	})
 
 	t.Run("UpdateTask", func(t *testing.T) {
@@ -137,73 +65,169 @@ func TestTaskRepositoryImpl(t *testing.T) {
 		assert.True(t, time.Now().Sub(updatedTask.CompletedAt.Time) < time.Second)
 	})
 
-	t.Run("GetTasksByDateRange", func(t *testing.T) {
+	t.Run("SearchTasks", func(t *testing.T) {
 		taskRepo := setUpTaskRepo(t)
 
-		// create in today
-		for i := 0; i < 10; i++ {
-			task := model.NewTask("test_user_id", model.TaskTypeOnboarding, 50)
-			task.CreatedAt = time.Now().Add(-time.Hour * 12)
-			_, _ = taskRepo.CreateTask(task)
+		tasksToBeInsert := []*model.Task{
+			{
+				UserID:     "user_1",
+				Type:       model.TaskTypeOnboarding,
+				Status:     model.TaskStatusPending,
+				SwapAmount: 50,
+				CreatedAt:  time.Now().Add(-time.Hour * 10),
+			},
+			{
+				UserID:     "user_1",
+				Type:       model.TaskTypeSharedPool,
+				Status:     model.TaskStatusDone,
+				SwapAmount: 100,
+				CreatedAt:  time.Now().Add(-time.Hour * 9),
+			},
+			{
+				UserID:     "user_2",
+				Type:       model.TaskTypeOnboarding,
+				Status:     model.TaskStatusPending,
+				SwapAmount: 75,
+				CreatedAt:  time.Now().Add(-time.Hour * 8),
+			},
+			{
+				UserID:     "user_2",
+				Type:       model.TaskTypeSharedPool,
+				Status:     model.TaskStatusDone,
+				SwapAmount: 150,
+				CreatedAt:  time.Now().Add(-time.Hour * 7),
+			},
+			{
+				UserID:     "user_3",
+				Type:       model.TaskTypeOnboarding,
+				Status:     model.TaskStatusPending,
+				SwapAmount: 200,
+				CreatedAt:  time.Now().Add(-time.Hour * 6),
+			},
+			{
+				UserID:     "user_3",
+				Type:       model.TaskTypeSharedPool,
+				Status:     model.TaskStatusDone,
+				SwapAmount: 250,
+				CreatedAt:  time.Now().Add(-time.Hour * 5),
+			},
+			{
+				UserID:     "user_1",
+				Type:       model.TaskTypeSharedPool,
+				Status:     model.TaskStatusPending,
+				SwapAmount: 300,
+				CreatedAt:  time.Now().Add(-time.Hour * 4),
+			},
+			{
+				UserID:     "user_2",
+				Type:       model.TaskTypeSharedPool,
+				Status:     model.TaskStatusDone,
+				SwapAmount: 350,
+				CreatedAt:  time.Now().Add(-time.Hour * 3),
+			},
+			{
+				UserID:     "user_3",
+				Type:       model.TaskTypeSharedPool,
+				Status:     model.TaskStatusPending,
+				SwapAmount: 400,
+				CreatedAt:  time.Now().Add(-time.Hour * 2),
+			},
+			{
+				UserID:     "user_4",
+				Type:       model.TaskTypeOnboarding,
+				Status:     model.TaskStatusDone,
+				SwapAmount: 450,
+				CreatedAt:  time.Now().Add(-time.Hour * 1),
+			},
 		}
 
-		// create in last week
-		for i := 0; i < 10; i++ {
-			task := model.NewTask("test_user_id", model.TaskTypeOnboarding, 50)
-			task.CreatedAt = time.Now().Add(-time.Hour * 24 * 8)
-			_, _ = taskRepo.CreateTask(task)
+		for _, task := range tasksToBeInsert {
+			newTask, _ := taskRepo.CreateTask(task)
+			task.ID = newTask.ID
 		}
 
-		t.Run("GetTasksByDateRange - Check Today", func(t *testing.T) {
-			from := time.Now().Add(-time.Hour * 24)
-			to := time.Now()
-			tasks, err := taskRepo.GetTasksByDateRange(from, to)
+		t.Run("Search By User", func(t *testing.T) {
+			tasks, err := taskRepo.SearchTasks(&SearchTasksCondition{
+				UserID: "user_1",
+			})
+			assert.NoError(t, err)
+			assert.Equal(t, 3, len(tasks))
 
-			if err != nil {
-				t.Errorf("GetTasksByDateRange() error = %v", err)
-			}
-
-			assert.Equal(t, 10, len(tasks))
-			for _, task := range tasks {
-				assert.NotEmpty(t, task.ID)
-				assert.Equal(t, "test_user_id", task.UserID)
-				assert.Equal(t, model.TaskTypeOnboarding, task.Type)
-				assert.Equal(t, model.TaskStatusPending, task.Status)
-				assert.Equal(t, 50.0, task.SwapAmount)
-				assert.NotEmpty(t, task.CreatedAt)
-				assert.Equal(t, task.CompletedAt, sql.NullTime{})
+			expectedTaskIndexes := []int{6, 1, 0}
+			for i, task := range tasks {
+				assert.Equal(t, tasksToBeInsert[expectedTaskIndexes[i]].ID, task.ID)
 			}
 		})
-		t.Run("GetTasksByDateRange - Check Last Week", func(t *testing.T) {
-			from := time.Now().Add(-time.Hour * 24 * 14)
-			to := time.Now().Add(-time.Hour * 24 * 7)
-			tasks, err := taskRepo.GetTasksByDateRange(from, to)
 
-			if err != nil {
-				t.Errorf("GetTasksByDateRange() error = %v", err)
-			}
+		t.Run("Search By Type", func(t *testing.T) {
+			tasks, err := taskRepo.SearchTasks(&SearchTasksCondition{
+				Type: model.TaskTypeOnboarding,
+			})
+			assert.NoError(t, err)
+			assert.Equal(t, 4, len(tasks))
 
-			assert.Equal(t, 10, len(tasks))
-			for _, task := range tasks {
-				assert.NotEmpty(t, task.ID)
-				assert.Equal(t, "test_user_id", task.UserID)
-				assert.Equal(t, model.TaskTypeOnboarding, task.Type)
-				assert.Equal(t, model.TaskStatusPending, task.Status)
-				assert.Equal(t, 50.0, task.SwapAmount)
-				assert.NotEmpty(t, task.CreatedAt)
-				assert.Equal(t, task.CompletedAt, sql.NullTime{})
+			expectedTaskIndexes := []int{9, 4, 2, 0}
+			for i, task := range tasks {
+				assert.Equal(t, tasksToBeInsert[expectedTaskIndexes[i]].ID, task.ID)
 			}
 		})
-		t.Run("GetTasksByDateRange - Check Two week before", func(t *testing.T) {
-			from := time.Now().Add(-time.Hour * 24 * 21)
-			to := time.Now().Add(-time.Hour * 24 * 14)
-			tasks, err := taskRepo.GetTasksByDateRange(from, to)
 
-			if err != nil {
-				t.Errorf("GetTasksByDateRange() error = %v", err)
+		t.Run("Search By Status", func(t *testing.T) {
+			tasks, err := taskRepo.SearchTasks(&SearchTasksCondition{
+				Status: model.TaskStatusDone,
+			})
+			assert.NoError(t, err)
+			assert.Equal(t, 5, len(tasks))
+
+			expectedTaskIndexes := []int{9, 7, 5, 3, 1}
+			for i, task := range tasks {
+				assert.Equal(t, tasksToBeInsert[expectedTaskIndexes[i]].ID, task.ID)
+			}
+		})
+
+		t.Run("Search, Type, Status", func(t *testing.T) {
+			tasks, err := taskRepo.SearchTasks(&SearchTasksCondition{
+				Type:   model.TaskTypeOnboarding,
+				Status: model.TaskStatusDone,
+			})
+			assert.NoError(t, err)
+			assert.Equal(t, 1, len(tasks))
+
+			expectedTaskIndexes := []int{9}
+			for i, task := range tasks {
+				assert.Equal(t, tasksToBeInsert[expectedTaskIndexes[i]].ID, task.ID)
+			}
+		})
+
+		t.Run("Search By Time Range", func(t *testing.T) {
+			tasks, err := taskRepo.SearchTasks(&SearchTasksCondition{
+				StartTime: time.Now().Add(-time.Hour*3 - time.Minute),
+				EndTime:   time.Now(),
+			})
+			assert.NoError(t, err)
+			assert.Equal(t, 3, len(tasks))
+
+			expectedTaskIndexes := []int{9, 8, 7}
+			for i, task := range tasks {
+				assert.Equal(t, tasksToBeInsert[expectedTaskIndexes[i]].ID, task.ID)
+			}
+		})
+
+		t.Run("InValid Search Range", func(t *testing.T) {
+			testConditions := map[string][]time.Time{
+				"Start Time > End Time": {time.Now().Add(time.Hour), time.Now()},
+				"Empty Start Time":      {time.Time{}, time.Now()},
+				"Empty End Time":        {time.Now(), time.Time{}},
 			}
 
-			assert.Equal(t, 0, len(tasks))
+			for _, timeRange := range testConditions {
+				tasks, err := taskRepo.SearchTasks(&SearchTasksCondition{
+					StartTime: timeRange[0],
+					EndTime:   timeRange[1],
+				})
+				assert.NotNil(t, err)
+				assert.Nil(t, tasks)
+			}
 		})
 	})
 }

@@ -8,6 +8,7 @@ import (
 	"time"
 	"trading-ace/mock/repository"
 	"trading-ace/src/model"
+	realRepo "trading-ace/src/repository"
 )
 
 type taskServiceTestSuite struct {
@@ -37,7 +38,9 @@ func TestTaskServiceImpl_GetTasksOfUser(t *testing.T) {
 				SwapAmount: 10.0,
 			},
 		}
-		testSuite.mockedTaskRepository.EXPECT().GetTasksByUserID("test_user_id").Return(tasksFromRepo, nil).Times(1)
+		testSuite.mockedTaskRepository.EXPECT().SearchTasks(&realRepo.SearchTasksCondition{
+			UserID: "test_user_id",
+		}).Return(tasksFromRepo, nil).Times(1)
 
 		tasks, err := testSuite.taskService.GetTasksOfUser("test_user_id")
 		assert.Nil(t, err)
@@ -48,7 +51,9 @@ func TestTaskServiceImpl_GetTasksOfUser(t *testing.T) {
 	t.Run("GetTasksOfUserFail", func(t *testing.T) {
 		testSuite.setUp(t)
 
-		testSuite.mockedTaskRepository.EXPECT().GetTasksByUserID("test_user_id").Return(nil, assert.AnError).Times(1)
+		testSuite.mockedTaskRepository.EXPECT().SearchTasks(&realRepo.SearchTasksCondition{
+			UserID: "test_user_id",
+		}).Return(nil, assert.AnError).Times(1)
 
 		tasks, err := testSuite.taskService.GetTasksOfUser("test_user_id")
 		assert.Nil(t, tasks)
@@ -130,7 +135,10 @@ func TestTaskServiceImpl_GetTasksByDateRange(t *testing.T) {
 				CreatedAt:  time.Now(),
 			},
 		}
-		testSuite.mockedTaskRepository.EXPECT().GetTasksByDateRange(from, to).Return(tasksFromRepo, nil).Times(1)
+		testSuite.mockedTaskRepository.EXPECT().SearchTasks(&realRepo.SearchTasksCondition{
+			StartTime: from,
+			EndTime:   to,
+		}).Return(tasksFromRepo, nil).Times(1)
 
 		tasks, err := testSuite.taskService.GetTasksByDateRange(from, to)
 		assert.Nil(t, err)
@@ -143,7 +151,10 @@ func TestTaskServiceImpl_GetTasksByDateRange(t *testing.T) {
 
 		from := time.Now()
 		to := time.Now().Add(time.Hour * 24)
-		testSuite.mockedTaskRepository.EXPECT().GetTasksByDateRange(from, to).Return(nil, assert.AnError).Times(1)
+		testSuite.mockedTaskRepository.EXPECT().SearchTasks(&realRepo.SearchTasksCondition{
+			StartTime: from,
+			EndTime:   to,
+		}).Return(nil, assert.AnError).Times(1)
 
 		tasks, err := testSuite.taskService.GetTasksByDateRange(from, to)
 		assert.Nil(t, tasks)
@@ -165,7 +176,10 @@ func TestTaskServiceImpl_GetTasksByUserIDAndType(t *testing.T) {
 				SwapAmount: 10.0,
 			},
 		}
-		testSuite.mockedTaskRepository.EXPECT().GetTasksByUserIDAndType("test_user_id", model.TaskTypeOnboarding).Return(tasksFromRepo, nil).Times(1)
+		testSuite.mockedTaskRepository.EXPECT().SearchTasks(&realRepo.SearchTasksCondition{
+			UserID: "test_user_id",
+			Type:   model.TaskTypeOnboarding,
+		}).Return(tasksFromRepo, nil).Times(1)
 
 		tasks, err := testSuite.taskService.GetTasksByUserIDAndType("test_user_id", model.TaskTypeOnboarding)
 		assert.Nil(t, err)
@@ -176,7 +190,10 @@ func TestTaskServiceImpl_GetTasksByUserIDAndType(t *testing.T) {
 	t.Run("GetTasksByUserIDAndTypeFail", func(t *testing.T) {
 		testSuite.setUp(t)
 
-		testSuite.mockedTaskRepository.EXPECT().GetTasksByUserIDAndType("test_user_id", model.TaskTypeOnboarding).Return(nil, assert.AnError).Times(1)
+		testSuite.mockedTaskRepository.EXPECT().SearchTasks(&realRepo.SearchTasksCondition{
+			UserID: "test_user_id",
+			Type:   model.TaskTypeOnboarding,
+		}).Return(nil, assert.AnError).Times(1)
 
 		tasks, err := testSuite.taskService.GetTasksByUserIDAndType("test_user_id", model.TaskTypeOnboarding)
 		assert.Nil(t, tasks)
