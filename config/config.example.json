@@ -7,6 +7,13 @@
     "password": "postgres",
     "dbname": "trading_ace"
   },
+  "redis": {
+    "job": {
+      "host": "localhost",
+      "port": 6377,
+      "db": 0
+    }
+  },
   "ethereum_node": {
     "socket": "wss://mainnet.infura.io/ws/v3/5517ebbc27a04d039903e612c0996e84"
   },
