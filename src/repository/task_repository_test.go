@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"testing"
 	"time"
 	"trading-ace/src/database"
@@ -63,6 +64,16 @@ func TestTaskRepositoryImpl(t *testing.T) {
 		assert.Equal(t, model.TaskStatusDone, updatedTask.Status)
 		assert.NotEmpty(t, updatedTask.CreatedAt)
 		assert.True(t, time.Now().Sub(updatedTask.CompletedAt.Time) < time.Second)
+	})
+
+	t.Run("UpdateTask, Invalid ID", func(t *testing.T) {
+		taskRepo := setUpTaskRepo(t)
+		task := model.NewTask("test_user_id", model.TaskTypeOnboarding, 50)
+		task.ID = 1
+
+		_, err := taskRepo.UpdateTask(task)
+		log.Println(err.Error())
+		assert.NotNil(t, err)
 	})
 
 	t.Run("SearchTasks", func(t *testing.T) {
@@ -201,8 +212,8 @@ func TestTaskRepositoryImpl(t *testing.T) {
 
 		t.Run("Search By Time Range", func(t *testing.T) {
 			tasks, err := taskRepo.SearchTasks(&SearchTasksCondition{
-				StartTime: time.Now().Add(-time.Hour*3 - time.Minute),
-				EndTime:   time.Now(),
+				StartTime: time.Now().Add(-time.Hour*3 - time.Minute).UTC(),
+				EndTime:   time.Now().UTC(),
 			})
 			assert.NoError(t, err)
 			assert.Equal(t, 3, len(tasks))
@@ -229,5 +240,25 @@ func TestTaskRepositoryImpl(t *testing.T) {
 				assert.Nil(t, tasks)
 			}
 		})
+	})
+
+	t.Run("GetTaskByID", func(t *testing.T) {
+		taskRepo := setUpTaskRepo(t)
+		task := model.NewTask("test_user_id", model.TaskTypeOnboarding, 50)
+
+		task, _ = taskRepo.CreateTask(task)
+
+		foundTask, err := taskRepo.GetTaskByID(task.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, task, foundTask)
+	})
+
+	t.Run("GetTaskByID, Invalid ID", func(t *testing.T) {
+		taskRepo := setUpTaskRepo(t)
+		task := model.NewTask("test_user_id", model.TaskTypeOnboarding, 50)
+		task.ID = 1
+
+		_, err := taskRepo.GetTaskByID(task.ID)
+		assert.NotNil(t, err)
 	})
 }

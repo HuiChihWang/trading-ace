@@ -2,7 +2,6 @@ package repository
 
 import (
 	"errors"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"trading-ace/src/database"
@@ -15,7 +14,6 @@ func TestUserRepositoryImpl(t *testing.T) {
 		dbInstance := database.GetDBInstance()
 		t.Cleanup(func() {
 			dbInstance.Exec("DELETE FROM users")
-			fmt.Println("[Tear Down] Cleaned up users table")
 		})
 
 		return &userRepositoryImpl{
