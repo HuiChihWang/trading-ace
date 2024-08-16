@@ -14,6 +14,7 @@ type RewardRecordSearchCondition struct {
 	StartTime time.Time
 	Duration  time.Duration
 	UserID    string
+	TaskID    int
 }
 
 type RewardRecordRepository interface {
@@ -57,6 +58,10 @@ func (r *rewardRecordRepositoryImpl) SearchRewardRecords(condition *RewardRecord
 
 	if condition.UserID != "" {
 		query = query.Where(squirrel.Eq{"user_id": condition.UserID})
+	}
+
+	if condition.TaskID != 0 {
+		query = query.Where(squirrel.Eq{"task_id": condition.TaskID})
 	}
 
 	if !condition.StartTime.IsZero() && condition.Duration != 0 {

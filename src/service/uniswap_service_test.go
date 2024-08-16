@@ -2,11 +2,13 @@ package service
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 	"trading-ace/mock/service"
 	"trading-ace/src/exception"
 	"trading-ace/src/model"
+	"trading-ace/src/repository"
 )
 
 type uniSwapServiceTestSuite struct {
@@ -48,7 +50,10 @@ func TestIsUserAlreadyOnboard(t *testing.T) {
 	t.Run("User Already Onboarded", func(t *testing.T) {
 		uniSwapTestSuite.setUp(t)
 
-		uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType("test_user_address", model.TaskTypeOnboarding).Return([]*model.Task{
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(&repository.SearchTasksCondition{
+			UserID: "test_user_address",
+			Type:   model.TaskTypeOnboarding,
+		}).Return(&[]*model.Task{
 			{
 				ID:         1,
 				UserID:     "test_user_address",
@@ -65,7 +70,10 @@ func TestIsUserAlreadyOnboard(t *testing.T) {
 	t.Run("User Not Onboarded", func(t *testing.T) {
 		uniSwapTestSuite.setUp(t)
 
-		uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType("test_user_address", model.TaskTypeOnboarding).Return([]*model.Task{}, nil).Times(1)
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(&repository.SearchTasksCondition{
+			UserID: "test_user_address",
+			Type:   model.TaskTypeOnboarding,
+		}).Return(&[]*model.Task{}, nil).Times(1)
 
 		result := uniSwapTestSuite.uniSwapService.isUserAlreadyOnboard("test_user_address")
 		assert.False(t, result)
@@ -74,7 +82,10 @@ func TestIsUserAlreadyOnboard(t *testing.T) {
 	t.Run("Query Error", func(t *testing.T) {
 		uniSwapTestSuite.setUp(t)
 
-		uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType("test_user_address", model.TaskTypeOnboarding).Return(nil, assert.AnError).Times(1)
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(&repository.SearchTasksCondition{
+			UserID: "test_user_address",
+			Type:   model.TaskTypeOnboarding,
+		}).Return(nil, assert.AnError).Times(1)
 
 		result := uniSwapTestSuite.uniSwapService.isUserAlreadyOnboard("test_user_address")
 		assert.False(t, result)
@@ -91,10 +102,12 @@ func TestUniSwapServiceImpl_ProcessUniSwapTransaction(t *testing.T) {
 			Points: 0,
 		}, nil).Times(1)
 
-		uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType(
-			"test_user_address",
-			model.TaskTypeOnboarding,
-		).Return([]*model.Task{}, nil).Times(1)
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(
+			&repository.SearchTasksCondition{
+				UserID: "test_user_address",
+				Type:   model.TaskTypeOnboarding,
+			},
+		).Return(&[]*model.Task{}, nil).Times(1)
 
 		uniSwapTestSuite.mockedTaskService.EXPECT().CreateTask(
 			"test_user_address",
@@ -123,7 +136,10 @@ func TestUniSwapServiceImpl_ProcessUniSwapTransaction(t *testing.T) {
 			Points: 0,
 		}, nil).Times(1)
 
-		uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType("test_user_address", model.TaskTypeOnboarding).Return([]*model.Task{}, nil).Times(1)
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(&repository.SearchTasksCondition{
+			UserID: "test_user_address",
+			Type:   model.TaskTypeOnboarding,
+		}).Return(&[]*model.Task{}, nil).Times(1)
 
 		err := uniSwapTestSuite.uniSwapService.ProcessUniSwapTransaction("test_user_address", 50.0)
 		assert.NotNil(t, err)
@@ -137,10 +153,10 @@ func TestUniSwapServiceImpl_ProcessUniSwapTransaction(t *testing.T) {
 			Points: 0,
 		}, nil).Times(1)
 
-		uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType(
-			"test_user_address",
-			model.TaskTypeOnboarding,
-		).Return([]*model.Task{
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(&repository.SearchTasksCondition{
+			UserID: "test_user_address",
+			Type:   model.TaskTypeOnboarding,
+		}).Return(&[]*model.Task{
 			{
 				ID:         1,
 				UserID:     "test_user_address",
@@ -183,14 +199,6 @@ func TestUniSwapServiceImpl_ProcessSharedPool(t *testing.T) {
 			CreatedAt:  createdTime,
 		},
 		{
-			ID:         2,
-			UserID:     "test_user_1",
-			Type:       model.TaskTypeSharedPool,
-			Status:     model.TaskStatusPending,
-			SwapAmount: 10.0,
-			CreatedAt:  createdTime,
-		},
-		{
 			ID:         3,
 			UserID:     "test_user_1",
 			Type:       model.TaskTypeSharedPool,
@@ -207,15 +215,7 @@ func TestUniSwapServiceImpl_ProcessSharedPool(t *testing.T) {
 			CreatedAt:  createdTime,
 		},
 		{
-			ID:         5,
-			UserID:     "test_user_2",
-			Type:       model.TaskTypeOnboarding,
-			Status:     model.TaskStatusDone,
-			SwapAmount: 10.0,
-			CreatedAt:  createdTime,
-		},
-		{
-			ID:         5,
+			ID:         7,
 			UserID:     "test_user_3",
 			Type:       model.TaskTypeSharedPool,
 			Status:     model.TaskStatusPending,
@@ -226,7 +226,7 @@ func TestUniSwapServiceImpl_ProcessSharedPool(t *testing.T) {
 			ID:         6,
 			UserID:     "test_user_2",
 			Type:       model.TaskTypeSharedPool,
-			Status:     model.TaskStatusDone,
+			Status:     model.TaskStatusPending,
 			SwapAmount: 10.0,
 			CreatedAt:  createdTime,
 		},
@@ -238,32 +238,37 @@ func TestUniSwapServiceImpl_ProcessSharedPool(t *testing.T) {
 		fromTime := parseTime("2021-01-01")
 		toTime := parseTime("2021-01-02")
 
-		uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByDateRange(fromTime, toTime).Return(tasksPool, nil).Times(1)
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(&repository.SearchTasksCondition{
+			Type:      model.TaskTypeSharedPool,
+			Status:    model.TaskStatusPending,
+			StartTime: fromTime,
+			EndTime:   toTime,
+		}).Return(&tasksPool, nil).Times(1)
 
 		IsUsersOnBoarded := map[string]bool{
 			"test_user_1": true,
 			"test_user_2": true,
 			"test_user_3": false,
 		}
-		for userID, isOnboarded := range IsUsersOnBoarded {
-			if isOnboarded {
-				uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType(userID, model.TaskTypeOnboarding).Return([]*model.Task{
-					{
-						UserID: userID,
-						Type:   model.TaskTypeOnboarding,
-						Status: model.TaskStatusDone,
-					},
-				}, nil)
-			} else {
-				uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByUserIDAndType(userID, model.TaskTypeOnboarding).Return([]*model.Task{}, nil)
-			}
-		}
+
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(mock.MatchedBy(func(condition *repository.SearchTasksCondition) bool {
+			return condition.Type == model.TaskTypeOnboarding && IsUsersOnBoarded[condition.UserID]
+		})).Return(&[]*model.Task{
+			{
+				Type:   model.TaskTypeOnboarding,
+				Status: model.TaskStatusDone,
+			},
+		}, nil)
+
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(mock.MatchedBy(func(condition *repository.SearchTasksCondition) bool {
+			return condition.Type == model.TaskTypeOnboarding && !IsUsersOnBoarded[condition.UserID]
+		})).Return(&[]*model.Task{}, nil)
 
 		filteredTasksAndExpectedPoints := map[*model.Task]float64{
 			tasksPool[0]: 2000,
-			tasksPool[1]: 2000,
-			tasksPool[2]: 4000,
-			tasksPool[3]: 2000,
+			tasksPool[1]: 4000,
+			tasksPool[2]: 2000,
+			tasksPool[4]: 2000,
 		}
 
 		for task, expectedPoints := range filteredTasksAndExpectedPoints {
@@ -280,7 +285,12 @@ func TestUniSwapServiceImpl_ProcessSharedPool(t *testing.T) {
 
 		fromTime := parseTime("2021-01-01")
 		toTime := parseTime("2021-01-02")
-		uniSwapTestSuite.mockedTaskService.EXPECT().GetTasksByDateRange(fromTime, toTime).Return(nil, assert.AnError).Times(1)
+		uniSwapTestSuite.mockedTaskService.EXPECT().SearchTasks(&repository.SearchTasksCondition{
+			Type:      model.TaskTypeSharedPool,
+			Status:    model.TaskStatusPending,
+			StartTime: fromTime,
+			EndTime:   toTime,
+		}).Return(nil, assert.AnError).Times(1)
 
 		err := uniSwapTestSuite.uniSwapService.ProcessSharedPool(fromTime, toTime)
 		assert.NotNil(t, err)

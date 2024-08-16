@@ -7,6 +7,7 @@ import (
 	"time"
 	"trading-ace/src/exception"
 	"trading-ace/src/model"
+	"trading-ace/src/repository"
 )
 
 const (
@@ -71,7 +72,12 @@ func (s *uniSwapServiceImpl) ProcessUniSwapTransaction(senderID string, swapAmou
 }
 
 func (s *uniSwapServiceImpl) ProcessSharedPool(from time.Time, to time.Time) error {
-	tasks, err := s.taskService.GetTasksByDateRange(from, to)
+	tasks, err := s.taskService.SearchTasks(&repository.SearchTasksCondition{
+		StartTime: from,
+		EndTime:   to,
+		Type:      model.TaskTypeSharedPool,
+		Status:    model.TaskStatusPending,
+	})
 
 	if err != nil {
 		return err
@@ -79,12 +85,8 @@ func (s *uniSwapServiceImpl) ProcessSharedPool(from time.Time, to time.Time) err
 
 	totalSwapAmount := 0.0
 	var filteredTasks []*model.Task
-	for _, task := range tasks {
+	for _, task := range *tasks {
 		if !s.isUserAlreadyOnboard(task.UserID) {
-			continue
-		}
-
-		if task.Type != model.TaskTypeSharedPool || task.Status == model.TaskStatusDone {
 			continue
 		}
 
@@ -122,6 +124,9 @@ func (s *uniSwapServiceImpl) processOnBoarding(userID string, swapAmount float64
 }
 
 func (s *uniSwapServiceImpl) isUserAlreadyOnboard(userID string) bool {
-	tasks, err := s.taskService.GetTasksByUserIDAndType(userID, model.TaskTypeOnboarding)
-	return err == nil && len(tasks) > 0
+	tasks, err := s.taskService.SearchTasks(&repository.SearchTasksCondition{
+		UserID: userID,
+		Type:   model.TaskTypeOnboarding,
+	})
+	return err == nil && len(*tasks) > 0
 }

@@ -8,11 +8,9 @@ import (
 )
 
 type TaskService interface {
-	GetTasksOfUser(userId string) ([]*model.Task, error)
-	GetTasksByDateRange(from time.Time, to time.Time) ([]*model.Task, error)
-	GetTasksByUserIDAndType(userID string, taskType model.TaskType) ([]*model.Task, error)
 	CreateTask(userId string, taskType model.TaskType, swapAmount float64) (*model.Task, error)
 	CompleteTask(taskID int) error
+	SearchTasks(condition *repository.SearchTasksCondition) (*[]*model.Task, error)
 }
 
 type taskServiceImpl struct {
@@ -25,24 +23,14 @@ func NewTaskService() TaskService {
 	}
 }
 
-func (s *taskServiceImpl) GetTasksOfUser(userId string) ([]*model.Task, error) {
-	return s.taskRepository.SearchTasks(&repository.SearchTasksCondition{
-		UserID: userId,
-	})
-}
+func (s *taskServiceImpl) SearchTasks(condition *repository.SearchTasksCondition) (*[]*model.Task, error) {
+	tasks, err := s.taskRepository.SearchTasks(condition)
 
-func (s *taskServiceImpl) GetTasksByDateRange(from time.Time, to time.Time) ([]*model.Task, error) {
-	return s.taskRepository.SearchTasks(&repository.SearchTasksCondition{
-		StartTime: from,
-		EndTime:   to,
-	})
-}
+	if err != nil {
+		return nil, err
+	}
 
-func (s *taskServiceImpl) GetTasksByUserIDAndType(userID string, taskType model.TaskType) ([]*model.Task, error) {
-	return s.taskRepository.SearchTasks(&repository.SearchTasksCondition{
-		UserID: userID,
-		Type:   taskType,
-	})
+	return &tasks, nil
 }
 
 func (s *taskServiceImpl) CreateTask(userId string, taskType model.TaskType, swapAmount float64) (*model.Task, error) {

@@ -14,6 +14,7 @@ const (
 type RewardService interface {
 	RewardUser(userID string, TaskID int, points float64) error
 	GetRewardHistory(userID string, startTime time.Time, duration time.Duration) ([]*model.RewardRecord, error)
+	GetRewardHistoryByTaskID(taskID int) (*model.RewardRecord, error)
 }
 
 type rewardServiceImpl struct {
@@ -84,4 +85,16 @@ func (r *rewardServiceImpl) GetRewardHistory(userID string, startTime time.Time,
 		StartTime: startTime,
 		Duration:  duration,
 	})
+}
+
+func (r *rewardServiceImpl) GetRewardHistoryByTaskID(taskID int) (*model.RewardRecord, error) {
+	records, err := r.rewardRecordRepository.SearchRewardRecords(&repository.RewardRecordSearchCondition{
+		TaskID: taskID,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return records[0], nil
 }

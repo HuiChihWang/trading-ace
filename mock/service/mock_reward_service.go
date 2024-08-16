@@ -83,6 +83,64 @@ func (_c *MockRewardService_GetRewardHistory_Call) RunAndReturn(run func(string,
 	return _c
 }
 
+// GetRewardHistoryByTaskID provides a mock function with given fields: taskID
+func (_m *MockRewardService) GetRewardHistoryByTaskID(taskID int) (*model.RewardRecord, error) {
+	ret := _m.Called(taskID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRewardHistoryByTaskID")
+	}
+
+	var r0 *model.RewardRecord
+	var r1 error
+	if rf, ok := ret.Get(0).(func(int) (*model.RewardRecord, error)); ok {
+		return rf(taskID)
+	}
+	if rf, ok := ret.Get(0).(func(int) *model.RewardRecord); ok {
+		r0 = rf(taskID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.RewardRecord)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(taskID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRewardService_GetRewardHistoryByTaskID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRewardHistoryByTaskID'
+type MockRewardService_GetRewardHistoryByTaskID_Call struct {
+	*mock.Call
+}
+
+// GetRewardHistoryByTaskID is a helper method to define mock.On call
+//   - taskID int
+func (_e *MockRewardService_Expecter) GetRewardHistoryByTaskID(taskID interface{}) *MockRewardService_GetRewardHistoryByTaskID_Call {
+	return &MockRewardService_GetRewardHistoryByTaskID_Call{Call: _e.mock.On("GetRewardHistoryByTaskID", taskID)}
+}
+
+func (_c *MockRewardService_GetRewardHistoryByTaskID_Call) Run(run func(taskID int)) *MockRewardService_GetRewardHistoryByTaskID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(int))
+	})
+	return _c
+}
+
+func (_c *MockRewardService_GetRewardHistoryByTaskID_Call) Return(_a0 *model.RewardRecord, _a1 error) *MockRewardService_GetRewardHistoryByTaskID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRewardService_GetRewardHistoryByTaskID_Call) RunAndReturn(run func(int) (*model.RewardRecord, error)) *MockRewardService_GetRewardHistoryByTaskID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RewardUser provides a mock function with given fields: userID, TaskID, points
 func (_m *MockRewardService) RewardUser(userID string, TaskID int, points float64) error {
 	ret := _m.Called(userID, TaskID, points)
