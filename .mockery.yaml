@@ -5,6 +5,10 @@ filename: "mock_{{.InterfaceNameSnake}}.go"
 dir: "mock/{{.PackageName}}"
 outpkg: "{{.PackageName}}"
 packages:
+  trading-ace/src/job:
+    config:
+    interfaces:
+      Client:
   trading-ace/src/repository:
     config:
     interfaces:

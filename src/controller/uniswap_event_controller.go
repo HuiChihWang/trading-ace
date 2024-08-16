@@ -1,10 +1,11 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"trading-ace/src/contract"
-	"trading-ace/src/service"
+	"trading-ace/src/job"
 )
 
 type UniSwapEventController interface {
@@ -12,7 +13,7 @@ type UniSwapEventController interface {
 }
 
 type uniSwapEventController struct {
-	uniSwapService service.UniSwapService
+	jobClient job.Client
 }
 
 var (
@@ -23,7 +24,7 @@ var (
 func GetUniSwapEventControllerInstance() UniSwapEventController {
 	uniSwapEventControllerOnce.Do(func() {
 		uniSwapEventControllerInstance = &uniSwapEventController{
-			uniSwapService: service.NewUniSwapService(),
+			jobClient: job.GetClientInstance(),
 		}
 	})
 	return uniSwapEventControllerInstance
@@ -51,5 +52,23 @@ func (u *uniSwapEventController) HandleUniSwapV2Event(event *contract.UniSwapV2S
 	fmt.Printf("Sender: %s\n", senderID)
 	fmt.Printf("Swap Amount: %f USD\n", swapAmountFloat)
 
-	return u.uniSwapService.ProcessUniSwapTransaction(senderID, swapAmountFloat)
+	if u.jobClient == nil {
+		return errors.New("job client is nil, cannot cache event")
+	}
+
+	task, err := job.NewUniSwapTransactionTask(&job.UniSwapTransactionPayload{
+		SenderID:   senderID,
+		SwapAmount: swapAmountFloat,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	_, err = u.jobClient.Enqueue(task)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

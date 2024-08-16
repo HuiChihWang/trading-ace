@@ -22,6 +22,15 @@ func (d *DatabaseConfig) GetConnectionStr() string {
 	return fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=disable", d.Host, d.Port, d.DBName, d.Username, d.Password)
 }
 
+type RedisConnectionConfig struct {
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Database int    `mapstructure:"db"`
+}
+type RedisConfig struct {
+	Job *RedisConnectionConfig `mapstructure:"job"`
+}
+
 type EthereumNodeConfig struct {
 	SocketUrl string `mapstructure:"socket"`
 }
@@ -42,4 +51,5 @@ type AppConfig struct {
 	Database     *DatabaseConfig     `mapstructure:"database"`
 	EthereumNode *EthereumNodeConfig `mapstructure:"ethereum_node"`
 	Campaign     *CampaignConfig     `mapstructure:"campaign"`
+	Redis        *RedisConfig        `mapstructure:"redis"`
 }

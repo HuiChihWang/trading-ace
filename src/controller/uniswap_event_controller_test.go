@@ -2,22 +2,24 @@ package controller
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/hibiken/asynq"
 	"github.com/stretchr/testify/assert"
 	"math/big"
 	"testing"
-	"trading-ace/mock/service"
+	"trading-ace/mock/job"
 	"trading-ace/src/contract"
+	realJob "trading-ace/src/job"
 )
 
 type uniSwapEventControllerTestSuite struct {
-	uniSwapController    UniSwapEventController
-	mockedUniSwapService *service.MockUniSwapService
+	uniSwapController UniSwapEventController
+	mockedJobClient   *job.MockClient
 }
 
 func (s *uniSwapEventControllerTestSuite) setUp(t *testing.T) {
-	s.mockedUniSwapService = service.NewMockUniSwapService(t)
+	s.mockedJobClient = job.NewMockClient(t)
 	s.uniSwapController = &uniSwapEventController{
-		uniSwapService: s.mockedUniSwapService,
+		jobClient: s.mockedJobClient,
 	}
 }
 
@@ -38,11 +40,15 @@ func TestHandleUniSwapV2Event(t *testing.T) {
 			To:         common.HexToAddress(testReiciver),
 		}
 
-		testSuite.mockedUniSwapService.EXPECT().ProcessUniSwapTransaction(
-			testSender,
-			0.123456).
-			Return(nil).Times(1)
-		err := testSuite.uniSwapController.HandleUniSwapV2Event(testEvent)
+		createdTask, err := realJob.NewUniSwapTransactionTask(&realJob.UniSwapTransactionPayload{
+			SenderID:   testSender,
+			SwapAmount: 0.123456,
+		})
+		assert.Nil(t, err)
+
+		testSuite.mockedJobClient.EXPECT().Enqueue(createdTask).Return(&asynq.TaskInfo{}, nil).Times(1)
+
+		err = testSuite.uniSwapController.HandleUniSwapV2Event(testEvent)
 		assert.Nil(t, err)
 	})
 
@@ -58,8 +64,15 @@ func TestHandleUniSwapV2Event(t *testing.T) {
 			To:         common.HexToAddress(testReiciver),
 		}
 
-		testSuite.mockedUniSwapService.EXPECT().ProcessUniSwapTransaction(testSender, 0.123456).Return(nil).Times(1)
-		err := testSuite.uniSwapController.HandleUniSwapV2Event(testEvent)
+		createdTask, err := realJob.NewUniSwapTransactionTask(&realJob.UniSwapTransactionPayload{
+			SenderID:   testSender,
+			SwapAmount: 0.123456,
+		})
+		assert.Nil(t, err)
+
+		testSuite.mockedJobClient.EXPECT().Enqueue(createdTask).Return(&asynq.TaskInfo{}, nil).Times(1)
+
+		err = testSuite.uniSwapController.HandleUniSwapV2Event(testEvent)
 		assert.Nil(t, err)
 	})
 
@@ -80,8 +93,15 @@ func TestHandleUniSwapV2Event(t *testing.T) {
 			To:         common.HexToAddress(testReiciver),
 		}
 
-		testSuite.mockedUniSwapService.EXPECT().ProcessUniSwapTransaction(testSender, 0.123456).Return(assert.AnError).Times(1)
-		err := testSuite.uniSwapController.HandleUniSwapV2Event(testEvent)
+		createdTask, err := realJob.NewUniSwapTransactionTask(&realJob.UniSwapTransactionPayload{
+			SenderID:   testSender,
+			SwapAmount: 0.123456,
+		})
+		assert.Nil(t, err)
+
+		testSuite.mockedJobClient.EXPECT().Enqueue(createdTask).Return(nil, assert.AnError).Times(1)
+
+		err = testSuite.uniSwapController.HandleUniSwapV2Event(testEvent)
 		assert.NotNil(t, err)
 	})
 }

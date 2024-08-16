@@ -8,12 +8,16 @@ import (
 	"trading-ace/src/contract"
 	"trading-ace/src/controller"
 	"trading-ace/src/database"
+	"trading-ace/src/job"
 	"trading-ace/src/router"
 	"trading-ace/src/scheduler"
 )
 
 func main() {
 	database.MigrateDB("file://migrations", config.GetAppConfig().Database)
+
+	job.SetUpJobProcessor()
+	defer job.ShutDownJobProcessor()
 
 	ethClient, err := ethclient.Dial(config.GetAppConfig().EthereumNode.SocketUrl)
 	log.Printf("Connected to Ethereum Node: %s\n", config.GetAppConfig().EthereumNode.SocketUrl)
