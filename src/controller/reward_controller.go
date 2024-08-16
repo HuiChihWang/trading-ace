@@ -2,7 +2,6 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -39,9 +38,6 @@ func (r *rewardController) GetRewardHistoryOfUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"exception": err.Error()})
 		return
 	}
-
-	log.Println("Start Time: ", query.StartTime)
-	log.Println("End Time: ", query.EndTime)
 
 	startTime, err := time.Parse(time.RFC3339, query.StartTime)
 	endTime, err := time.Parse(time.RFC3339, query.EndTime)

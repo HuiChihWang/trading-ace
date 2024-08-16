@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 	"trading-ace/mock/service"
 	"trading-ace/src/model"
 	"trading-ace/src/repository"
@@ -31,6 +32,7 @@ func (s *taskControllerTestSuite) setUp(t *testing.T) {
 
 func TestGetTasksOfUser(t *testing.T) {
 	testSuite := &taskControllerTestSuite{}
+	createTime, _ := time.Parse(time.RFC3339, "2021-01-01T05:00:00Z")
 	tasks := []*model.Task{
 		{
 			ID:         1,
@@ -38,6 +40,7 @@ func TestGetTasksOfUser(t *testing.T) {
 			Type:       model.TaskTypeSharedPool,
 			UserID:     "test_user_id",
 			SwapAmount: 10.0,
+			CreatedAt:  createTime,
 		},
 		{
 			ID:         2,
@@ -45,6 +48,7 @@ func TestGetTasksOfUser(t *testing.T) {
 			Type:       model.TaskTypeOnboarding,
 			UserID:     "test_user_id",
 			SwapAmount: 10000.0,
+			CreatedAt:  createTime,
 		},
 		{
 			ID:         3,
@@ -52,6 +56,7 @@ func TestGetTasksOfUser(t *testing.T) {
 			Type:       model.TaskTypeSharedPool,
 			UserID:     "test_user_id",
 			SwapAmount: 10.0,
+			CreatedAt:  createTime,
 		},
 	}
 
@@ -82,13 +87,24 @@ func TestGetTasksOfUser(t *testing.T) {
 
 		testResponseWriter := httptest.NewRecorder()
 		testContext, _ := gin.CreateTestContext(testResponseWriter)
+		startTimeStr := "2021-01-01T00:00:00Z"
+		endTimeStr := "2021-01-02T00:00:00Z"
 		testContext.Request = httptest.NewRequest(
 			http.MethodGet,
-			fmt.Sprintf("/api/tasks?user_address=%s", "test_user_id"), nil)
+			fmt.Sprintf("/api/tasks?user_address=%s&start_time=%s&end_time=%s",
+				"test_user_id",
+				startTimeStr,
+				endTimeStr,
+			), nil)
+
+		startTime, _ := time.Parse(time.RFC3339, startTimeStr)
+		endTime, _ := time.Parse(time.RFC3339, endTimeStr)
 
 		testSuite.mockedTaskService.EXPECT().
 			SearchTasks(&repository.SearchTasksCondition{
-				UserID: "test_user_id",
+				UserID:    "test_user_id",
+				StartTime: startTime,
+				EndTime:   endTime,
 			}).
 			Return(&tasks, nil)
 
@@ -140,13 +156,24 @@ func TestGetTasksOfUser(t *testing.T) {
 
 		testResponseWriter := httptest.NewRecorder()
 		testContext, _ := gin.CreateTestContext(testResponseWriter)
+		startTimeStr := "2021-01-01T00:00:00Z"
+		endTimeStr := "2021-01-02T00:00:00Z"
 		testContext.Request = httptest.NewRequest(
 			http.MethodGet,
-			fmt.Sprintf("/api/tasks?user_address=%s", "test_user_id"), nil)
+			fmt.Sprintf("/api/tasks?user_address=%s&start_time=%s&end_time=%s",
+				"test_user_id",
+				startTimeStr,
+				endTimeStr,
+			), nil)
+
+		startTime, _ := time.Parse(time.RFC3339, startTimeStr)
+		endTime, _ := time.Parse(time.RFC3339, endTimeStr)
 
 		testSuite.mockedTaskService.EXPECT().
 			SearchTasks(&repository.SearchTasksCondition{
-				UserID: "test_user_id",
+				UserID:    "test_user_id",
+				StartTime: startTime,
+				EndTime:   endTime,
 			}).
 			Return(&tasks, nil)
 
@@ -204,13 +231,24 @@ func TestGetTasksOfUser(t *testing.T) {
 
 		testResponseWriter := httptest.NewRecorder()
 		testContext, _ := gin.CreateTestContext(testResponseWriter)
+		startTimeStr := "2021-01-01T00:00:00Z"
+		endTimeStr := "2021-01-02T00:00:00Z"
 		testContext.Request = httptest.NewRequest(
 			http.MethodGet,
-			fmt.Sprintf("/api/tasks?user_address=%s", "test_user_id"), nil)
+			fmt.Sprintf("/api/tasks?user_address=%s&start_time=%s&end_time=%s",
+				"test_user_id",
+				startTimeStr,
+				endTimeStr,
+			), nil)
+
+		startTime, _ := time.Parse(time.RFC3339, startTimeStr)
+		endTime, _ := time.Parse(time.RFC3339, endTimeStr)
 
 		testSuite.mockedTaskService.EXPECT().
 			SearchTasks(&repository.SearchTasksCondition{
-				UserID: "test_user_id",
+				UserID:    "test_user_id",
+				StartTime: startTime,
+				EndTime:   endTime,
 			}).
 			Return(nil, assert.AnError)
 
@@ -230,13 +268,24 @@ func TestGetTasksOfUser(t *testing.T) {
 
 		testResponseWriter := httptest.NewRecorder()
 		testContext, _ := gin.CreateTestContext(testResponseWriter)
+		startTimeStr := "2021-01-01T00:00:00Z"
+		endTimeStr := "2021-01-02T00:00:00Z"
 		testContext.Request = httptest.NewRequest(
 			http.MethodGet,
-			fmt.Sprintf("/api/tasks?user_address=%s", "test_user_id"), nil)
+			fmt.Sprintf("/api/tasks?user_address=%s&start_time=%s&end_time=%s",
+				"test_user_id",
+				startTimeStr,
+				endTimeStr,
+			), nil)
+
+		startTime, _ := time.Parse(time.RFC3339, startTimeStr)
+		endTime, _ := time.Parse(time.RFC3339, endTimeStr)
 
 		testSuite.mockedTaskService.EXPECT().
 			SearchTasks(&repository.SearchTasksCondition{
-				UserID: "test_user_id",
+				UserID:    "test_user_id",
+				StartTime: startTime,
+				EndTime:   endTime,
 			}).
 			Return(&[]*model.Task{}, nil)
 

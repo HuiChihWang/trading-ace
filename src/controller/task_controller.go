@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"sync"
+	"time"
 	"trading-ace/src/repository"
 	"trading-ace/src/request"
 	"trading-ace/src/response"
@@ -41,8 +42,18 @@ func (t *taskController) SearchTasks(c *gin.Context) {
 		return
 	}
 
+	startTime, err := time.Parse(time.RFC3339, query.StartTime)
+	endTime, err := time.Parse(time.RFC3339, query.EndTime)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"exception": err.Error()})
+		return
+	}
+
 	tasks, err := t.taskService.SearchTasks(&repository.SearchTasksCondition{
-		UserID: query.User,
+		UserID:    query.User,
+		StartTime: startTime,
+		EndTime:   endTime,
 	})
 
 	if err != nil {

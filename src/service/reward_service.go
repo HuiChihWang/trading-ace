@@ -96,5 +96,9 @@ func (r *rewardServiceImpl) GetRewardHistoryByTaskID(taskID int) (*model.RewardR
 		return nil, err
 	}
 
+	if len(records) == 0 {
+		return nil, nil
+	}
+
 	return records[0], nil
 }
