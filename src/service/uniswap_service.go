@@ -46,7 +46,7 @@ func (s *uniSwapServiceImpl) ProcessUniSwapTransaction(senderID string, swapAmou
 		sender, err = s.userService.CreateUser(senderID)
 	}
 
-	if sender == nil {
+	if err != nil {
 		return err
 	}
 
@@ -56,8 +56,6 @@ func (s *uniSwapServiceImpl) ProcessUniSwapTransaction(senderID string, swapAmou
 		if err != nil {
 			return err
 		}
-
-		log.Println(fmt.Sprintf("User %s has completed onboarding", senderID))
 	}
 
 	_, err = s.taskService.CreateTask(senderID, model.TaskTypeSharedPool, swapAmount)
@@ -105,8 +103,11 @@ func (s *uniSwapServiceImpl) ProcessSharedPool(from time.Time, to time.Time) err
 
 func (s *uniSwapServiceImpl) processOnBoarding(userID string, swapAmount float64) error {
 	if swapAmount < onboardingAmount {
-		return errors.New("swap amount does not meet the requirement")
+		log.Println(fmt.Sprintf("User %s does not meet the onboarding requirement", userID))
+		return nil
 	}
+
+	log.Println(fmt.Sprintf("User %s satisfy onboarding condition with amount %f", userID, swapAmount))
 
 	task, err := s.taskService.CreateTask(userID, model.TaskTypeOnboarding, swapAmount)
 

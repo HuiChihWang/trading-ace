@@ -141,8 +141,19 @@ func TestUniSwapServiceImpl_ProcessUniSwapTransaction(t *testing.T) {
 			Type:   model.TaskTypeOnboarding,
 		}).Return(&[]*model.Task{}, nil).Times(1)
 
+		uniSwapTestSuite.mockedTaskService.EXPECT().CreateTask(
+			"test_user_address",
+			model.TaskTypeSharedPool,
+			50.0,
+		).Return(&model.Task{
+			UserID:     "test_user_address",
+			Type:       model.TaskTypeSharedPool,
+			Status:     model.TaskStatusPending,
+			SwapAmount: 50.0,
+		}, nil).Times(1)
+
 		err := uniSwapTestSuite.uniSwapService.ProcessUniSwapTransaction("test_user_address", 50.0)
-		assert.NotNil(t, err)
+		assert.Nil(t, err)
 	})
 
 	t.Run("User already onboarded", func(t *testing.T) {
